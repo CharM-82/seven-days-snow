@@ -1006,7 +1006,7 @@ const UI = (function () {
       count++;
       const from = rectCenter($('#score-dmg'));
       const to = rectCenter($('#enemy-icon'));
-      flyIcon(card.icon, from, to, 260, () => { hitEnemyFx(); setTimeout(next, 130); });
+      flyIcon(card.icon, from, to, 180, () => { hitEnemyFx(); setTimeout(next, 80); });
     }
     next();
   }
@@ -1028,36 +1028,25 @@ const UI = (function () {
     if (!S || S.over) return;
     const card = S.hand[i];
     if (!card) return;
+    const p = Combat.preview(i);
+    const nums = p && p.numbers;
+    const hits = nums ? nums.hits : 1;
 
     if (card.type === 'attack') {
       busy = true;
+      Combat.playCard(i);
       showZoneCard(card);
       showVortex();
-      suckZoneTo($('#score-dmg'), 500, hideVortex);
-      const p = Combat.preview(i);
-      const hits = (p && p.numbers) ? p.numbers.hits : 1;
-      animateScore(i, () => {
-        doHitFlies(card, hits, () => {
-          Combat.playCard(i);
-          resetScoreDamage();
-          hideVortex();
-          busy = false;
-          renderCombat(Combat.state());
-        });
-      });
+      animateScoreNums(nums, () => { hideVortex(); hideZoneCard(); });
+      doHitFlies(card, hits, () => {});
+      setTimeout(() => { busy = false; }, 180);
     } else {
       busy = true;
+      Combat.playCard(i);
       showZoneCard(card);
       shakeEl($('#zone-card'));
-      const target = targetForSkill(card);
-      suckZoneTo(target, 500, () => {
-        setTimeout(() => {
-          Combat.playCard(i);
-          hideZoneCard();
-          busy = false;
-          renderCombat(Combat.state());
-        }, 120);
-      });
+      suckZoneTo(targetForSkill(card), 220, hideZoneCard);
+      setTimeout(() => { busy = false; }, 180);
     }
   }
 
@@ -1075,24 +1064,22 @@ const UI = (function () {
     $('#score-result').textContent = '';
   }
 
-  function animateScore(i, done) {
-    const p = Combat.preview(i);
-    const nums = p && p.numbers;
-    if (!nums) { done(); return; }
+  function animateScoreNums(nums, done) {
+    if (!nums) { if (done) done(); return; }
     const dmgEl = $('#score-dmg'), multEl = $('#score-mult'), resEl = $('#score-result');
     resEl.textContent = '';
     const targetChips = nums.chips;
     const targetMult = Math.max(1, nums.mult);
     const targetTotal = nums.total;
     const start = performance.now();
-    const dur = 620;
+    const dur = 320;
     function step(ts) {
       const t = Math.min(1, (ts - start) / dur);
       const eased = 1 - Math.pow(1 - t, 3);
       dmgEl.textContent = Math.round(targetChips * eased);
       multEl.textContent = Math.round((1 + (targetMult - 1) * eased) * 10) / 10;
       if (t < 1) requestAnimationFrame(step);
-      else { dmgEl.textContent = targetChips; multEl.textContent = targetMult; resEl.textContent = '= ' + targetTotal + ' 总伤害'; setTimeout(done, 420); }
+      else { dmgEl.textContent = targetChips; multEl.textContent = targetMult; resEl.textContent = '= ' + targetTotal + ' 总伤害'; if (done) setTimeout(done, 120); }
     }
     requestAnimationFrame(step);
   }
@@ -1141,6 +1128,8 @@ const UI = (function () {
     showReward, showBossDeath, showResult
   };
 })();
+
+
 
 
 
