@@ -27,10 +27,11 @@ body { font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", san
 #app { width: 100%; height: 100%; max-width: 480px; margin: 0 auto; position: relative; }
 .screen { position: absolute; inset: 0; display: none; flex-direction: column; }
 .screen.active { display: flex; }
-.btn { display: block; width: auto; margin: 0; padding: 11px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--text); font-size: 14px; cursor: pointer; }
+.btn { display: block; width: auto; margin: 0; padding: 11px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--text); font-size: 14px; cursor: pointer; text-align: center; }
 .btn:active { transform: scale(.97); }
 .btn-primary { background: linear-gradient(135deg, #3a7bd5, #2b5bb0); border-color: #5a8fe0; color: #fff; font-weight: 700; }
 .btn-end { padding: 10px 15px; background: var(--warm); color: #251500; border: 0; font-weight: 800; }
+#screen-menu .btn, #screen-result .btn { margin-left: auto; margin-right: auto; width: min(80%, 320px); }
 .hidden { display: none !important; }
 .vortex { width: 10px; height: 10px; border-radius: 50%; background: #000; box-shadow: 0 0 10px 4px rgba(127,212,255,.65); margin: 2px auto 0; }
 .vortex.active { animation: vortexPulse .4s infinite; }
@@ -95,15 +96,17 @@ body { font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", san
 /* 手牌 */
 #hand-area { flex: 0 0 auto; display: flex; justify-content: center; padding: 6px 10px 2px; }
 .hand { display: flex; align-items: flex-end; justify-content: center; gap: 6px; position: relative; width: 100%; }
-.card { flex: 0 0 auto; width: 70px; min-height: 102px; border-radius: 12px; border: 1.5px solid var(--line); background: linear-gradient(180deg, #1d2a4a, #141c33); padding: 6px; display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; transition: transform .12s; }
+.card { flex: 0 0 auto; width: 70px; min-height: 102px; will-change: transform; border-radius: 12px; border: 1.5px solid var(--line); background: linear-gradient(180deg, #1d2a4a, #141c33); padding: 6px; display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; transition: transform .12s; }
 .card.held { transform: translateY(-14px) scale(1.2); z-index: 40; }
 .card.inspect { transform: translateY(-20px) scale(1.35); z-index: 50; }
 .card.draw-in { animation: drawIn .35s ease; }
 @keyframes drawIn { 0% { opacity: 0; transform: translateX(90px) scale(.8); } 100% { opacity: 1; transform: translateX(0) scale(1); } }
 .card.disabled { opacity: .4; cursor: not-allowed; }
-.hand.stacked .card { margin-left: -24px; }
+.hand.stacked { gap: 0; }
+.hand.stacked .card { margin-left: 0; }
 .hand.stacked .card:first-child { margin-left: 0; }
-.card .cost { position: absolute; top: 4px; left: 5px; width: 18px; height: 18px; border-radius: 50%; background: var(--warm); color: #251500; font-weight: 800; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+.card .corner-icon { position: absolute; top: 4px; left: 5px; font-size: 13px; line-height: 1; }
+.card .cost { position: absolute; bottom: 4px; left: 5px; width: 18px; height: 18px; border-radius: 50%; background: var(--warm); color: #251500; font-weight: 800; font-size: 11px; display: flex; align-items: center; justify-content: center; }
 .card .type-badge { position: absolute; top: 5px; right: 5px; font-size: 8px; padding: 2px 4px; border-radius: 5px; }
 .type-badge.attack { background: rgba(255,154,168,.16); color: var(--atk); }
 .type-badge.skill { background: rgba(127,212,255,.16); color: var(--skill); }
@@ -155,6 +158,7 @@ body { font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", san
 .reward-grid .card { width: auto; min-height: 118px; }
 .reward-actions { display: flex; gap: 10px; margin-top: 14px; }
 .reward-actions .btn { flex: 1; }
+
 
 
 
@@ -419,7 +423,6 @@ const Combat = (function () {
 
   function draw(n) {
     while (n > 0) {
-      if (S.hand.length >= GAME.handSize) return;
       if (S.deck.length === 0) {
         if (S.discard.length === 0) return;
         S.deck = shuffle(S.discard);
@@ -709,6 +712,7 @@ const Combat = (function () {
   };
 })();
 
+
 </script>
   <script>// 《七日回雪》v4 卡牌原型 · 界面渲染、拖拽出牌与效果动画
 'use strict';
@@ -721,7 +725,8 @@ const UI = (function () {
   let drag = null;
   let busy = false;
   let prevState = null;
-  let prevHandCount = 0;
+  let prevHandKey = '';
+  let prevHandLen = 0;
 
   function showScreen(name) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -732,6 +737,7 @@ const UI = (function () {
   function cardMarkup(c, idx) {
     const typeLabel = { attack: '攻击', skill: '技能', power: '能力' }[c.type];
     return '<div class="card type-' + c.type + '" data-idx="' + idx + '">'
+      + '<div class="corner-icon">' + c.icon + '</div>'
       + '<div class="cost">' + c.cost + '</div>'
       + '<div class="type-badge ' + c.type + '">' + typeLabel + '</div>'
       + '<div class="c-icon">' + c.icon + '</div>'
@@ -785,7 +791,7 @@ const UI = (function () {
 
   function renderCombat(S) {
     if (!S) return;
-    if (S.turn && S.turn !== lastTurn) { lastTurn = S.turn; prevHandCount = 0; shakeEquipOnTurn(S); }
+    if (S.turn && S.turn !== lastTurn) { lastTurn = S.turn; prevHandKey = ''; prevHandLen = 0; shakeEquipOnTurn(S); }
     if (prevState && !busy) animateDiffs(prevState, S);
 
     $('#node-label').textContent = S.node.label + ' · 第 ' + S.turn + ' 回合';
@@ -836,7 +842,55 @@ const UI = (function () {
     prevState = snapshot(S);
   }
 
-  function resetTurn() { lastTurn = 0; inspectIndex = null; busy = false; prevState = null; }
+  function syncHand(S) {
+    const key = S.hand.map(c => c.id).join('|');
+    const hand = $('#hand');
+    if (key !== prevHandKey) {
+      buildHand(S, hand);
+      prevHandKey = key;
+    }
+    applyHandState(S, hand);
+  }
+
+  function buildHand(S, hand) {
+    const newCount = Math.max(0, S.hand.length - prevHandLen);
+    hand.classList.toggle('stacked', S.hand.length > 5);
+    hand.innerHTML = S.hand.map((c, i) => cardMarkup(c, i)).join('');
+    hand.querySelectorAll('.card').forEach(el => {
+      const i = parseInt(el.dataset.idx, 10);
+      if (newCount > 0 && i >= S.hand.length - newCount) el.classList.add('draw-in');
+    });
+    layoutHand(hand);
+    prevHandLen = S.hand.length;
+  }
+
+  function applyHandState(S, hand) {
+    hand.querySelectorAll('.card').forEach(el => {
+      const i = parseInt(el.dataset.idx, 10);
+      const c = S.hand[i];
+      if (!c) return;
+      el.classList.toggle('disabled', S.over || S.player.energy < c.cost);
+      el.classList.toggle('inspect', i === inspectIndex);
+    });
+  }
+
+  function layoutHand(hand) {
+    const cards = hand.querySelectorAll('.card');
+    const count = cards.length;
+    if (count <= 1) {
+      cards.forEach(el => { el.style.marginLeft = ''; });
+      return;
+    }
+    const containerW = hand.getBoundingClientRect().width;
+    const cardW = 70;
+    if (count * cardW > containerW) {
+      const overlap = Math.min(46, Math.max(12, (count * cardW - containerW) / (count - 1)));
+      cards.forEach((el, i) => { el.style.marginLeft = i === 0 ? '' : (-overlap) + 'px'; });
+    } else {
+      cards.forEach(el => { el.style.marginLeft = ''; });
+    }
+  }
+  function resetTurn() { lastTurn = 0; inspectIndex = null; busy = false; prevState = null; prevHandKey = ''; prevHandLen = 0; }
 
   function pushLog(kind, text) {
     const list = $('#log-list');
@@ -1095,6 +1149,10 @@ const UI = (function () {
     showReward, showBossDeath, showResult
   };
 })();
+
+
+
+
 
 
 
