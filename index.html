@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>七日回雪 · 卡牌原型</title>
+  <style>:root {
+  --bg: #0c1220;
+  --panel: #16213b;
+  --panel2: #1e2c4d;
+  --line: #2c3c60;
+  --text: #e8efff;
+  --muted: #92a1c2;
+  --cold: #7fd4ff;
+  --warm: #ffb46b;
+  --gold: #ffd76b;
+  --danger: #ff7b8a;
+  --heal: #6bffb0;
+  --vuln: #ff9b5a;
+  --atk: #ff9aa8;
+  --skill: #7fd4ff;
+  --power: #d5a7ff;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; cursor: none; }
+html, body { margin: 0; height: 100%; background: var(--bg); }
+body { font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; color: var(--text); touch-action: manipulation; user-select: none; -webkit-user-select: none; overflow: hidden; cursor: none; }
+#app { width: 100%; height: 100%; max-width: 480px; margin: 0 auto; position: relative; }
+.screen { position: absolute; inset: 0; display: none; flex-direction: column; }
+.screen.active { display: flex; }
+.btn { display: block; width: auto; margin: 0; padding: 11px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--text); font-size: 14px; cursor: pointer; }
+.btn:active { transform: scale(.97); }
+.btn-primary { background: linear-gradient(135deg, #3a7bd5, #2b5bb0); border-color: #5a8fe0; color: #fff; font-weight: 700; }
+.btn-end { padding: 10px 15px; background: var(--warm); color: #251500; border: 0; font-weight: 800; }
+.hidden { display: none !important; }
+.vortex { width: 10px; height: 10px; border-radius: 50%; background: #000; box-shadow: 0 0 10px 4px rgba(127,212,255,.65); margin: 2px auto 0; }
+.vortex.active { animation: vortexPulse .4s infinite; }
+@keyframes vortexPulse { 0% { transform: scale(.6); opacity: .7; } 50% { transform: scale(1.5); opacity: 1; } 100% { transform: scale(.6); opacity: .7; } }
+#fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 40; overflow: hidden; }
+.fx-fly { position: absolute; font-size: 30px; z-index: 40; pointer-events: none; }
+.enemy-hit { animation: enemyHit .35s; }
+@keyframes enemyHit { 0% { filter: none; transform: translateX(0); } 25% { filter: brightness(1.6) saturate(2); transform: translateX(-4px); } 50% { filter: brightness(1.8) saturate(2); transform: translateX(4px); } 100% { filter: none; transform: translateX(0); } }.shake { animation: cardShake .38s; }
+.wobble { animation: numWobble .4s; }
+@keyframes cardShake { 0% { transform: rotate(0); } 30% { transform: rotate(8deg); } 60% { transform: rotate(-6deg); } 100% { transform: rotate(0); } }
+@keyframes numWobble { 0% { transform: scale(1); } 40% { transform: scale(1.22) rotate(-3deg); } 100% { transform: scale(1); } }
+
+/* 菜单与结算 */
+#screen-menu, #screen-result { background: radial-gradient(circle at 50% 20%, #1b2c55, #0b1020 70%); align-items: center; justify-content: center; }
+.menu-inner { text-align: center; padding: 24px; width: 100%; }
+.logo { font-size: 40px; font-weight: 800; letter-spacing: 4px; color: #fff; text-shadow: 0 0 22px rgba(127,212,255,.55); }
+.subtitle { margin-top: 8px; color: var(--cold); letter-spacing: 2px; }
+.rule-line { margin: 14px 0 20px; color: var(--gold); font-size: 14px; }
+.menu-tip { margin-top: 10px; color: var(--muted); font-size: 12px; }
+#result-big { font-size: 56px; margin: 8px 0; }
+#result-title { font-size: 26px; font-weight: 800; color: #fff; }
+#result-text { color: var(--muted); font-size: 14px; margin: 12px 0 20px; line-height: 1.6; }
+
+/* 对局 */
+#screen-run { background: var(--bg); }
+#topbar { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--line); }
+.node-pill { background: var(--panel2); border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; font-size: 13px; }
+.mult-pill { background: rgba(255,215,107,.12); border: 1px solid var(--gold); border-radius: 999px; padding: 6px 10px; font-size: 13px; color: var(--gold); font-weight: 800; }
+
+#enemy-area { padding: 10px 10px 2px; }
+.enemy-card { position: relative; background: linear-gradient(180deg, #1b2744, #121a30); border: 1px solid var(--line); border-radius: 16px; padding: 12px; text-align: center; }
+.enemy-icon { font-size: 44px; line-height: 1; }
+.enemy-name { margin-top: 4px; font-size: 14px; color: #fff; }
+.bar { height: 9px; border-radius: 6px; background: rgba(0,0,0,.4); overflow: hidden; margin: 8px auto 0; width: 80%; }
+.bar-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #ff6b7a, #ff9aa8); }
+.enemy-sub { margin-top: 6px; font-size: 12px; color: var(--muted); display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.badge { font-size: 10px; padding: 2px 6px; border-radius: 6px; background: rgba(255,155,90,.18); color: var(--vuln); }
+.badge.stack { background: rgba(255,215,107,.14); color: var(--gold); }
+.intent { margin-top: 8px; display: inline-block; font-size: 13px; padding: 4px 10px; border-radius: 8px; background: rgba(255,154,168,.12); color: var(--atk); }
+
+#equip-row { display: flex; gap: 8px; padding: 6px 10px 2px; }
+.equip-slot { flex: 1; min-height: 56px; border: 1.5px dashed var(--line); border-radius: 12px; background: rgba(22,32,58,.6); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; color: var(--muted); text-align: center; padding: 6px 4px; }
+.equip-slot.filled { border-style: solid; border-color: var(--gold); color: var(--gold); background: rgba(255,215,107,.06); }
+.eq-name { font-size: 11px; line-height: 1.1; }
+.eq-desc { font-size: 9px; color: var(--muted); line-height: 1.2; }
+
+/* 中间战斗区 */
+#combat-zone { position: relative; flex: 1; margin: 8px 12px 0; padding: 10px; min-height: 96px; border: 1.5px dashed var(--line); border-radius: 16px; background: rgba(0,0,0,.18); display: flex; flex-direction: column; justify-content: center; }
+#combat-zone.active { border-color: var(--cold); background: rgba(127,212,255,.08); }
+#scoreboard { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.score-item { display: flex; flex-direction: column; align-items: center; }
+.score-label { font-size: 11px; color: var(--muted); }
+.score-num { font-size: 26px; font-weight: 900; color: #fff; line-height: 1.1; }
+.score-x { font-size: 18px; color: var(--muted); font-weight: 800; }
+.score-result { text-align: center; font-size: 15px; font-weight: 800; color: var(--gold); min-height: 20px; margin-top: 2px; }
+#zone-card { display: flex; justify-content: center; align-items: center; min-height: 62px; margin-top: 4px; pointer-events: none; }
+#zone-card .card { transform: scale(.6); transform-origin: top center; }
+.drop-hint { text-align: center; font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+#transition-gap { height: 9px; }
+
+/* 手牌 */
+#hand-area { flex: 0 0 auto; display: flex; justify-content: center; padding: 6px 10px 2px; }
+.hand { display: flex; align-items: flex-end; justify-content: center; gap: 6px; position: relative; width: 100%; }
+.card { flex: 0 0 auto; width: 70px; min-height: 102px; border-radius: 12px; border: 1.5px solid var(--line); background: linear-gradient(180deg, #1d2a4a, #141c33); padding: 6px; display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; transition: transform .12s; }
+.card.held { transform: translateY(-14px) scale(1.2); z-index: 40; }
+.card.inspect { transform: translateY(-20px) scale(1.35); z-index: 50; }
+.card.draw-in { animation: drawIn .35s ease; }
+@keyframes drawIn { 0% { opacity: 0; transform: translateX(90px) scale(.8); } 100% { opacity: 1; transform: translateX(0) scale(1); } }
+.card.disabled { opacity: .4; cursor: not-allowed; }
+.hand.stacked .card { margin-left: -24px; }
+.hand.stacked .card:first-child { margin-left: 0; }
+.card .cost { position: absolute; top: 4px; left: 5px; width: 18px; height: 18px; border-radius: 50%; background: var(--warm); color: #251500; font-weight: 800; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+.card .type-badge { position: absolute; top: 5px; right: 5px; font-size: 8px; padding: 2px 4px; border-radius: 5px; }
+.type-badge.attack { background: rgba(255,154,168,.16); color: var(--atk); }
+.type-badge.skill { background: rgba(127,212,255,.16); color: var(--skill); }
+.type-badge.power { background: rgba(213,167,255,.16); color: var(--power); }
+.card .c-icon { font-size: 22px; margin-top: 14px; line-height: 1; }
+.card .c-name { font-size: 11px; font-weight: 800; color: #fff; margin-top: 3px; text-align: center; line-height: 1.1; }
+.card .c-desc { font-size: 9px; color: var(--muted); margin-top: 3px; text-align: center; line-height: 1.25; }
+.card.type-attack { border-color: rgba(255,154,168,.55); }
+.card.type-skill { border-color: rgba(127,212,255,.55); }
+.card.type-power { border-color: rgba(213,167,255,.55); }
+
+/* 下方状态条 */
+#player-bars { display: flex; flex-direction: column; gap: 4px; padding: 4px 12px 6px; }
+.pbar { display: flex; align-items: center; gap: 8px; }
+.pbar-label { width: 40px; font-size: 11px; color: var(--muted); text-align: right; flex: 0 0 auto; }
+.pbar-track { position: relative; flex: 1; height: 16px; border-radius: 8px; background: rgba(0,0,0,.35); overflow: hidden; }
+.pbar-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 8px; transition: width .15s; }
+.pbar-fill.hp { background: linear-gradient(90deg, #ff6b7a, #ff9aa8); }
+.pbar-fill.block { background: linear-gradient(90deg, #7fd4ff, #a5e6ff); }
+.pbar-fill.energy { background: linear-gradient(90deg, #ffd76b, #ffe9a8); }
+.pbar-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.7); }
+
+#bottom-bar { display: flex; align-items: center; gap: 10px; padding: 6px 12px; background: var(--panel); border-top: 1px solid var(--line); }
+.pile { font-size: 11px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; flex: 1; }
+
+/* 战斗播报 */
+#log-list { position: absolute; top: 19%; left: 12px; right: 12px; display: flex; flex-direction: column; gap: 4px; pointer-events: none; z-index: 15; }
+.log-line { font-size: 12px; padding: 3px 8px; border-radius: 8px; background: rgba(0,0,0,.45); color: #fff; opacity: 0; animation: logIn .25s forwards; width: fit-content; max-width: 100%; }
+.log-line.player { color: #6fb5ff; }
+.log-line.boss { color: #ff7b8a; }
+.log-line.info { color: #fff; }
+.log-line.fade { animation: logOut .6s forwards; }
+@keyframes logIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes logOut { to { opacity: 0; transform: translateY(-6px); } }
+
+/* 拖拽幽灵与 Boss 击破 */
+#drag-ghost { position: fixed; z-index: 999; pointer-events: none; width: 76px; height: 104px; transform: translate(-50%, -50%); }
+#drag-ghost .card { width: 100%; height: 100%; }
+#boss-death { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.55); z-index: 20; }
+#boss-death .boss-death-text { font-size: 34px; font-weight: 900; color: var(--gold); animation: bossPop .9s ease; text-shadow: 0 0 24px rgba(255,215,107,.7); }
+@keyframes bossPop { 0% { transform: scale(.4); opacity: 0; } 60% { transform: scale(1.25); opacity: 1; } 100% { transform: scale(1); } }
+
+/* 奖励弹层 */
+#modal-root { position: fixed; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; }
+.modal { pointer-events: auto; width: 88%; max-width: 430px; max-height: 84%; overflow: auto; background: linear-gradient(180deg, #1a2646, #121b32); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: 0 24px 60px rgba(0,0,0,.5); }
+.modal h3 { margin: 0 0 10px; font-size: 18px; color: #fff; }
+.modal .body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.reward-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.reward-grid .card { width: auto; min-height: 118px; }
+.reward-actions { display: flex; gap: 10px; margin-top: 14px; }
+.reward-actions .btn { flex: 1; }
+
+
+
+
+
+
+
+
+
+
+
+
+</style>
+</head>
+<body>
+  <div id="app">
+
+    <section id="screen-menu" class="screen active">
+      <div class="menu-inner">
+        <div class="logo">七日回雪</div>
+        <div class="subtitle">卡牌打怪 · 原型</div>
+        <div class="rule-line">伤害 = 基础伤害 × 倍数</div>
+        <button id="btn-start" class="btn btn-primary">开始闯关</button>
+        <div class="menu-tip">按住卡牌 → 拖到中间战斗区 → 松手出牌</div>
+      </div>
+    </section>
+
+    <section id="screen-run" class="screen">
+      <div id="topbar">
+        <div class="node-pill" id="node-label">第 1 战</div>
+        <div class="mult-pill" id="stat-mult">✖ 倍数 1.0</div>
+      </div>
+
+      <div id="enemy-area">
+        <div class="enemy-card">
+          <div class="enemy-icon" id="enemy-icon">👊</div>
+          <div class="enemy-name" id="enemy-name">物业打手</div>
+          <div class="bar"><div class="bar-fill hp-fill" id="enemy-hp-fill"></div></div>
+          <div class="enemy-sub">
+            <span id="enemy-hp">20/20</span>
+            <span id="enemy-block">🛡 0</span>
+            <span id="enemy-vuln" class="badge hidden">易伤</span>
+            <span id="enemy-stacks" class="badge stack hidden">克扣 0</span>
+          </div>
+          <div class="intent" id="enemy-intent">攻击 6</div>
+        </div>
+      </div>
+
+      <div id="equip-row">
+        <div class="equip-slot" id="equip-0"></div>
+        <div class="equip-slot" id="equip-1"></div>
+        <div class="equip-slot" id="equip-2"></div>
+      </div>
+
+      <div id="combat-zone">
+        <div id="scoreboard">
+          <div class="score-item"><span class="score-label">伤害</span><span class="score-num" id="score-dmg">0</span><span id="score-vortex" class="vortex hidden"></span></div>
+          <div class="score-x">×</div>
+          <div class="score-item"><span class="score-label">倍数</span><span class="score-num" id="score-mult">1</span></div>
+        </div>
+        <div class="score-result" id="score-result"></div>
+        <div id="zone-card" class="hidden"></div>
+        <div class="drop-hint">拖到这里出牌</div>
+      </div>
+
+      <div id="transition-gap"></div>
+
+      <div id="hand-area">
+        <div class="hand" id="hand"></div>
+      </div>
+
+      <div id="player-bars">
+        <div class="pbar">
+          <div class="pbar-label">生命</div>
+          <div class="pbar-track"><div class="pbar-fill hp" id="hp-fill"></div><span class="pbar-text" id="bar-hp">60/60</span></div>
+        </div>
+        <div class="pbar">
+          <div class="pbar-label">格挡</div>
+          <div class="pbar-track"><div class="pbar-fill block" id="block-fill"></div><span class="pbar-text" id="bar-block">0</span></div>
+        </div>
+        <div class="pbar">
+          <div class="pbar-label">行动力</div>
+          <div class="pbar-track"><div class="pbar-fill energy" id="energy-fill"></div><span class="pbar-text" id="bar-energy">3/3</span></div>
+        </div>
+      </div>
+
+      <div id="bottom-bar">
+        <div class="pile"><span id="draw-count">牌堆 0</span><span id="discard-count">弃牌 0</span></div>
+        <button id="btn-end-turn" class="btn btn-end">结束回合</button>
+      </div>
+
+      <div id="fx-layer"></div>
+      <div id="log-list"></div>
+      <div id="boss-death" class="hidden"><div class="boss-death-text">BOSS 击破！</div></div>
+      <div id="drag-ghost" class="hidden"></div>
+    </section>
+
+    <section id="screen-result" class="screen">
+      <div class="menu-inner">
+        <div id="result-big">🏆</div>
+        <div id="result-title">胜利</div>
+        <div id="result-text"></div>
+        <button id="btn-restart" class="btn btn-primary">再来一局</button>
+      </div>
+    </section>
+
+    <div id="modal-root">
+      <div class="modal hidden" id="modal-reward"></div>
+    </div>
+  </div>
+
+  <script>// 《七日回雪》v3 卡牌原型 · 数据配置（数值集中在此便于调参）
+'use strict';
+
+const GAME = {
+  playerHp: 60,
+  energy: 3,
+  handSize: 5,
+  drawPerTurn: 5,
+  multBase: 1,
+  blockCap: 20,
+  bossChapter: 1
+};
+
+const CARDS = [
+  // 初始牌组
+  { id: 'pick', name: '破冰镐', type: 'attack', cost: 1, icon: '⛏️', desc: '造成 6 基础伤害', damage: 6, hits: 1, starter: true },
+  { id: 'wrap', name: '御寒裹紧', type: 'skill', cost: 1, icon: '🧥', desc: '获得 5 格挡', effects: [{ type: 'block', value: 5 }], starter: true },
+  { id: 'ration', name: '应急口粮', type: 'skill', cost: 0, icon: '🍫', desc: '抽 1 张牌', effects: [{ type: 'draw', value: 1 }], starter: true },
+  { id: 'stock', name: '清点物资', type: 'skill', cost: 0, icon: '📦', desc: '本回合 倍数 +1', effects: [{ type: 'multAdd', value: 1 }], starter: true },
+  { id: 'expose', name: '当众揭发', type: 'attack', cost: 1, icon: '📢', desc: '造成 5 伤害，施加 1 易伤', damage: 5, hits: 1, effects: [{ type: 'vuln', value: 1 }], starter: true },
+
+  // 奖励攻击牌
+  { id: 'boots', name: '雪地靴', type: 'attack', cost: 0, icon: '🥾', desc: '造成 3 基础伤害', damage: 3, hits: 1 },
+  { id: 'icicle', name: '冰锥连击', type: 'attack', cost: 1, icon: '🧊', desc: '造成 3 伤害，命中 2 次', damage: 3, hits: 2 },
+  { id: 'hammer', name: '破拆锤', type: 'attack', cost: 2, icon: '🔨', desc: '造成 12 基础伤害', damage: 12, hits: 1 },
+  { id: 'iceblade', name: '冰刃', type: 'attack', cost: 1, icon: '❄️', desc: '造成 7 伤害；倍数≥4 再命中 1 次', damage: 7, hits: 1, bonus: { type: 'multGe', value: 4, extraHits: 1 } },
+  { id: 'chain', name: '证据链', type: 'attack', cost: 1, icon: '🔗', desc: '造成 6 伤害，抽 1 张牌', damage: 6, hits: 1, effects: [{ type: 'draw', value: 1 }] },
+  { id: 'allin', name: '破釜沉舟', type: 'attack', cost: 2, icon: '💥', desc: '造成 9 伤害；生命≤30 时基础伤害×2', damage: 9, hits: 1, bonus: { type: 'hpLe', value: 30, mult: 2 } },
+  { id: 'ace', name: '终极底牌', type: 'attack', cost: 3, icon: '🃏', desc: '造成 8 伤害；本回合每打出过 1 张攻击 +4', damage: 8, hits: 1, bonus: { type: 'attacksThisTurn', per: 4 } },
+
+  // 奖励技能牌
+  { id: 'gen', name: '柴油发电机', type: 'skill', cost: 1, icon: '⚡', desc: '获得 1 行动力', effects: [{ type: 'energy', value: 1 }] },
+  { id: 'layer', name: '加厚保温层', type: 'skill', cost: 1, icon: '🧵', desc: '获得 8 格挡', effects: [{ type: 'block', value: 8 }] },
+  { id: 'list', name: '物资清单', type: 'skill', cost: 0, icon: '📋', desc: '本回合 倍数 +2', effects: [{ type: 'multAdd', value: 2 }] },
+  { id: 'huddle', name: '抱团取暖', type: 'skill', cost: 1, icon: '🤝', desc: '本回合 倍数 ×2', effects: [{ type: 'multMul', value: 2 }] },
+  { id: 'rush', name: '雪夜急行', type: 'skill', cost: 0, icon: '🌨️', desc: '抽 2 张牌', effects: [{ type: 'draw', value: 2 }] },
+  { id: 'soup', name: '热汤', type: 'skill', cost: 1, icon: '🍲', desc: '恢复 5 生命', effects: [{ type: 'heal', value: 5 }] },
+  { id: 'unity', name: '团结互助', type: 'skill', cost: 1, icon: '🫂', desc: '倍数 ×1.5，获得 4 格挡', effects: [{ type: 'multMul', value: 1.5 }, { type: 'block', value: 4 }] },
+  { id: 'torch', name: '火炬', type: 'skill', cost: 1, icon: '🔥', desc: '本回合 倍数 +3', effects: [{ type: 'multAdd', value: 3 }] },
+
+  // 能力牌
+  { id: 'avalanche', name: '雪崩预警', type: 'power', cost: 2, icon: '🚨', desc: '每回合开始 倍数 +1', power: { kind: 'startMult', value: 1 } },
+  { id: 'thermo', name: '恒温系统', type: 'power', cost: 2, icon: '🌡️', desc: '每回合开始获得 4 格挡', power: { kind: 'startBlock', value: 4 } },
+  { id: 'battery', name: '备用电源', type: 'power', cost: 1, icon: '🔋', desc: '每回合开始获得 1 行动力', power: { kind: 'startEnergy', value: 1 } },
+  { id: 'network', name: '情报网', type: 'power', cost: 1, icon: '📡', desc: '每回合开始抽 1 张牌', power: { kind: 'startDraw', value: 1 } }
+];
+
+const EQUIPMENTS = [
+  { id: 'quilt', name: '旧棉被', icon: '🛏️', desc: '每回合开始格挡 +3', effect: 'startBlock3' },
+  { id: 'heater', name: '热力贴', icon: '♨️', desc: '每回合开始 倍数 +1', effect: 'baseMult1' },
+  { id: 'radio', name: '对讲机', icon: '📻', desc: '每回合开始抽 1 张牌', effect: 'startDraw1' },
+  { id: 'gen2', name: '备用发电机', icon: '⚙️', desc: '每回合开始行动力 +1', effect: 'startEnergy1' },
+  { id: 'tent', name: '保温帐篷', icon: '⛺', desc: '回合结束保留最多 3 格挡', effect: 'retainBlock3' },
+  { id: 'dossier', name: '集团密档', icon: '🗂️', desc: '每回合第一张攻击伤害 ×1.5', effect: 'firstAttack15' }
+];
+
+const ENEMIES = [
+  { id: 'looter', name: '抢购者', icon: '😤', hp: 16, intents: [{ kind: 'attack', value: 6 }, { kind: 'attack', value: 6 }, { kind: 'block', value: 4 }] },
+  { id: 'hoarder', name: '囤积者', icon: '😒', hp: 24, intents: [{ kind: 'attack', value: 8 }, { kind: 'attack', value: 5 }, { kind: 'block', value: 6 }] },
+  { id: 'thug', name: '物业打手', icon: '👊', hp: 20, intents: [{ kind: 'attackVuln', value: 6 }, { kind: 'attack', value: 6 }, { kind: 'block', value: 5 }] }
+];
+
+// 第一季五章 Boss 配置（Boss-1 已接入，Boss-2~5 数据备用，机制待后续接入）
+const BOSSES = [
+  {
+    id: 'boss1', chapter: 1, name: '物业经理', icon: '🕴️', hp: 70, startBlock: 6,
+    core: { name: '克扣门禁', desc: '玩家每打 1 张牌，Boss 获得 1 层克扣；Boss 攻击时每层 +1 伤害并清零' },
+    attack: [{ kind: 'attack', value: 8 }, { kind: 'attack', value: 8 }, { kind: 'attack', value: 14 }],
+    defense: { startBlock: 6, regen: 6, every: 3 },
+    antiAttack: { stack: 1, desc: '攻击牌额外 +1 层克扣' },
+    antiSkill: { stack: 2, desc: '技能牌额外 +2 层克扣' }
+  },
+  {
+    id: 'boss2', chapter: 2, name: '区域主管', icon: '🧑‍💼', hp: 105, startBlock: 8,
+    core: { name: '配给限额', desc: '每回合第 3 张及之后的牌费用 +1' },
+    attack: [{ kind: 'attack', value: 10 }, { kind: 'attack', value: 10 }, { kind: 'attack', value: 12, hits: 2 }],
+    defense: { startBlock: 8, regen: 8, every: 2 },
+    antiAttack: { stack: 1, desc: '攻击牌使 Boss 获得 1 层配给，攻击时每层 +1 伤害' },
+    antiSkill: { desc: '技能牌触发 Boss 清除自身易伤并 +3 格挡' }
+  },
+  {
+    id: 'boss3', chapter: 3, name: '安保队长', icon: '💂', hp: 140, startBlock: 10,
+    core: { name: '巡逻警戒', desc: '每 3 回合进入警戒；警戒期间玩家攻击伤害 -50%，Boss 首次受击后解除并反伤 4' },
+    attack: [{ kind: 'attack', value: 12 }, { kind: 'attack', value: 12 }, { kind: 'attack', value: 18 }],
+    defense: { startBlock: 10, regen: 5, every: 1 },
+    antiAttack: { desc: '玩家打攻击牌时受到 2 点反伤' },
+    antiSkill: { desc: '玩家打技能牌时 Boss 下回合攻击 +1' }
+  },
+  {
+    id: 'boss4', chapter: 4, name: '核心高管', icon: '🧛', hp: 175, startBlock: 12,
+    core: { name: '信息封锁', desc: '每回合开始随机 1 张手牌费用 +1；若玩家未出牌，Boss +6 格挡' },
+    attack: [{ kind: 'attack', value: 14 }, { kind: 'attack', value: 14 }, { kind: 'attack', value: 16, hits: 2 }, { kind: 'attack', value: 22 }],
+    defense: { startBlock: 12, regen: 12, every: 3 },
+    antiAttack: { stack: 1, desc: '攻击牌使 Boss 获得 1 层封锁，攻击时每层 +1 伤害' },
+    antiSkill: { desc: '技能牌使 Boss 恢复 3 HP' }
+  },
+  {
+    id: 'boss5', chapter: 5, name: '周鸿安', icon: '👔', hp: 210, startBlock: 14,
+    core: { name: '白夜倒计时', desc: '第 6 回合起每回合结束造成 10 点不可格挡伤害，每回合 +5' },
+    attack: [{ kind: 'attack', value: 16 }, { kind: 'attack', value: 16 }, { kind: 'attack', value: 24, hits: 2 }, { kind: 'attack', value: 24 }],
+    defense: { startBlock: 14, regen: 14, every: 3 },
+    antiAttack: { desc: '攻击牌使 Boss 下回合攻击 +2' },
+    antiSkill: { desc: '技能牌使 Boss 恢复 2 HP' }
+  }
+];
+
+const NODES = [
+  { label: '外围', enemyId: 'looter' },
+  { label: '仓储区', enemyId: 'hoarder' },
+  { label: '物业大堂', enemyId: 'thug' },
+  { label: '最终对峙', enemyId: 'boss' }
+];
+
+const STARTER_DECK = ['pick', 'pick', 'pick', 'pick', 'wrap', 'wrap', 'wrap', 'ration', 'stock', 'expose'];
+
+function cardById(id) { return CARDS.find(c => c.id === id); }
+function equipById(id) { return EQUIPMENTS.find(e => e.id === id); }
+function enemyById(id) { return ENEMIES.find(e => e.id === id); }
+function bossByChapter(ch) { return BOSSES.find(b => b.chapter === ch) || BOSSES[0]; }
+function cardPool() { return CARDS.filter(c => !c.starter); }
+</script>
+  <script>// 《七日回雪》v4 卡牌原型 · 战斗状态机（带事件播报）
+'use strict';
+
+const Combat = (function () {
+  let S = null;
+  let onChange = function () {};
+  let onLog = function () {};
+  let onEnd = function () {};
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function hasEquip(effect) {
+    return (S.equip || []).some(id => id && equipById(id) && equipById(id).effect === effect);
+  }
+  function pow(kind) {
+    return S.powers.reduce((sum, p) => sum + (p.kind === kind ? p.value : 0), 0);
+  }
+  function computeBaseMult() {
+    return GAME.multBase + pow('startMult') + (hasEquip('baseMult1') ? 1 : 0);
+  }
+  function fmt(v) { return Math.round(v * 10) / 10; }
+  function log(kind, text) { onLog(kind, text); }
+
+  function draw(n) {
+    while (n > 0) {
+      if (S.hand.length >= GAME.handSize) return;
+      if (S.deck.length === 0) {
+        if (S.discard.length === 0) return;
+        S.deck = shuffle(S.discard);
+        S.discard = [];
+      }
+      S.hand.push(S.deck.pop());
+      n--;
+    }
+  }
+
+  function bossOnTurnStart() {
+    if (!S.boss || !S.enemy.boss) return;
+    const d = S.boss.defense;
+    if (d && d.every && d.regen && S.turn % d.every === 0) {
+      S.enemy.block += d.regen;
+      log('boss', S.enemy.name + ' 获得 ' + d.regen + ' 格挡');
+    }
+  }
+
+  function startTurn() {
+    S.turn += 1;
+    S.player.vuln = 0;
+    S.enemy.vuln = 0;
+    S.player.energy = GAME.energy + pow('startEnergy') + (hasEquip('startEnergy1') ? 1 : 0);
+    S.baseMult = computeBaseMult();
+    S.turnMult = S.baseMult;
+    S.attacksThisTurn = 0;
+
+    let startBlock = 0;
+    if (hasEquip('startBlock3')) startBlock += 3;
+    startBlock += pow('startBlock');
+    if (startBlock > 0) {
+      S.player.block += startBlock;
+      log('player', '获得 ' + startBlock + ' 格挡');
+    }
+
+    draw(GAME.drawPerTurn);
+    let extraDraw = 0;
+    if (hasEquip('startDraw1')) extraDraw += 1;
+    extraDraw += pow('startDraw');
+    if (extraDraw > 0) {
+      draw(extraDraw);
+      log('player', '额外抽牌 ' + extraDraw + ' 张');
+    }
+
+    S.enemy.currentIntent = S.enemy.intents[(S.turn - 1) % S.enemy.intents.length];
+    bossOnTurnStart();
+    log('info', '第 ' + S.turn + ' 回合');
+    emit();
+  }
+
+  function hitEnemy(base) {
+    let raw = Math.round(base * S.turnMult);
+    if (S.enemy.vuln > 0) raw = Math.round(raw * 1.5);
+    if (S.attacksThisTurn === 0 && hasEquip('firstAttack15')) raw = Math.round(raw * 1.5);
+    if (S.enemy.block > 0) {
+      const absorbed = Math.min(S.enemy.block, raw);
+      S.enemy.block -= absorbed;
+      raw -= absorbed;
+    }
+    if (raw > 0) S.enemy.hp -= raw;
+    return Math.max(0, raw);
+  }
+
+  function previewEffect(e) {
+    switch (e.type) {
+      case 'block': return '获得 ' + e.value + ' 格挡';
+      case 'draw': return '抽 ' + e.value + ' 张牌';
+      case 'energy': return '行动力 +' + e.value;
+      case 'heal': return '恢复 ' + e.value + ' 生命';
+      case 'multAdd': return '倍数 ' + fmt(S.turnMult) + ' → ' + fmt(S.turnMult + e.value);
+      case 'multMul': return '倍数 ' + fmt(S.turnMult) + ' → ' + fmt(S.turnMult * e.value);
+      case 'vuln': return '施加 ' + e.value + ' 易伤';
+      default: return '';
+    }
+  }
+
+  function applySkillEffect(e) {
+    switch (e.type) {
+      case 'block':
+        S.player.block += e.value;
+        log('player', '获得 ' + e.value + ' 格挡');
+        break;
+      case 'draw':
+        draw(e.value);
+        log('player', '抽 ' + e.value + ' 张牌');
+        break;
+      case 'energy':
+        S.player.energy += e.value;
+        log('player', '行动力 +' + e.value);
+        break;
+      case 'heal':
+        S.player.hp = Math.min(S.player.maxHp, S.player.hp + e.value);
+        log('player', '恢复 ' + e.value + ' 生命');
+        break;
+      case 'multAdd':
+        log('player', '倍数 ' + fmt(S.turnMult) + ' → ' + fmt(S.turnMult + e.value));
+        S.turnMult += e.value;
+        break;
+      case 'multMul':
+        log('player', '倍数 ' + fmt(S.turnMult) + ' → ' + fmt(S.turnMult * e.value));
+        S.turnMult *= e.value;
+        break;
+      case 'vuln':
+        S.enemy.vuln += e.value;
+        log('boss', S.enemy.name + ' 获得 ' + e.value + ' 易伤');
+        break;
+    }
+  }
+
+  function preview(i) {
+    if (!S || S.over) return { playable: false };
+    const card = S.hand[i];
+    if (!card || S.player.energy < card.cost) return { playable: false };
+    if (card.type === 'power') {
+      return { playable: true, kind: 'power', text: '能力：' + card.desc };
+    }
+    if (card.type === 'attack') {
+      let baseDmg = card.damage;
+      if (card.bonus) {
+        if (card.bonus.type === 'hpLe' && S.player.hp <= card.bonus.value) baseDmg *= card.bonus.mult;
+        if (card.bonus.type === 'attacksThisTurn') baseDmg += card.bonus.per * S.attacksThisTurn;
+      }
+      let hits = card.hits || 1;
+      if (card.bonus && card.bonus.type === 'multGe' && S.turnMult >= card.bonus.value) hits += (card.bonus.extraHits || 0);
+      const chips = baseDmg * hits;
+      const total = Math.round(chips * S.turnMult);
+      let text = '基础伤害 ' + chips + ' × 倍数 ' + fmt(S.turnMult) + ' = ' + total + ' 伤害';
+      if (S.enemy.block > 0) text += '；敌方格挡 ' + S.enemy.block + ' 会先抵扣';
+      if (card.effects) {
+        for (const e of card.effects) {
+          const t = previewEffect(e);
+          if (t) text += '；' + t;
+        }
+      }
+      return { playable: true, kind: 'attack', text, numbers: { chips, hits, mult: S.turnMult, total } };
+    }
+    if (card.type === 'skill') {
+      const parts = card.effects.map(previewEffect).filter(Boolean);
+      return { playable: true, kind: 'skill', text: parts.join('；') };
+    }
+    return { playable: true, kind: card.type, text: card.desc };
+  }
+
+  function bossOnPlayerCard(card) {
+    if (!S.boss || !S.enemy.boss) return;
+    let add = 1;
+    if (card.type === 'attack' && S.boss.antiAttack && S.boss.antiAttack.stack) add += S.boss.antiAttack.stack;
+    if (card.type === 'skill' && S.boss.antiSkill && S.boss.antiSkill.stack) add += S.boss.antiSkill.stack;
+    S.enemy.stacks += add;
+    log('boss', S.enemy.name + ' 获得 ' + add + ' 层克扣');
+  }
+
+  function playCard(i) {
+    if (S.over) return { played: false, log: '' };
+    const card = S.hand[i];
+    if (!card || S.player.energy < card.cost) return { played: false, log: '' };
+    S.player.energy -= card.cost;
+    S.hand.splice(i, 1);
+
+    let logText = '';
+    if (card.type === 'power') {
+      S.powers.push(card.power);
+      logText = card.name + '：' + card.desc;
+      log('player', logText);
+    } else if (card.type === 'attack') {
+      let dmg = card.damage;
+      if (card.bonus) {
+        if (card.bonus.type === 'hpLe' && S.player.hp <= card.bonus.value) dmg *= card.bonus.mult;
+        if (card.bonus.type === 'attacksThisTurn') dmg += card.bonus.per * S.attacksThisTurn;
+      }
+      let hits = card.hits || 1;
+      if (card.bonus && card.bonus.type === 'multGe' && S.turnMult >= card.bonus.value) hits += (card.bonus.extraHits || 0);
+      let applied = 0;
+      for (let h = 0; h < hits; h++) applied += hitEnemy(dmg);
+      S.attacksThisTurn += 1;
+      if (card.effects) {
+        for (const e of card.effects) {
+          if (e.type === 'vuln') { S.enemy.vuln += e.value; log('boss', S.enemy.name + ' 获得 ' + e.value + ' 易伤'); }
+          else if (e.type === 'draw') { draw(e.value); log('player', '抽 ' + e.value + ' 张牌'); }
+        }
+      }
+      S.discard.push(card);
+      logText = card.name + '：造成 ' + applied + ' 伤害';
+      log('boss', S.enemy.name + ' 受到 ' + applied + ' 伤害');
+    } else if (card.type === 'skill') {
+      for (const e of card.effects) applySkillEffect(e);
+      S.discard.push(card);
+      logText = card.name;
+    }
+
+    bossOnPlayerCard(card);
+
+    if (S.enemy.hp <= 0) {
+      S.enemy.hp = 0;
+      endBattle(true);
+    } else {
+      emit();
+    }
+    return { played: true, log: logText };
+  }
+
+  function endTurn() {
+    if (S.over) return;
+    S.discard = S.discard.concat(S.hand);
+    S.hand = [];
+
+    const intent = S.enemy.currentIntent;
+    if (intent.kind === 'attack' || intent.kind === 'attackVuln') {
+      if (intent.kind === 'attackVuln') {
+        S.player.vuln += 1;
+        log('boss', S.enemy.name + ' 施加 1 易伤');
+      }
+      let base = intent.value;
+      if (S.boss && S.enemy.boss) {
+        base += (S.enemy.stacks || 0);
+        S.enemy.stacks = 0;
+      }
+      let raw = Math.round(base * (S.player.vuln > 0 ? 1.5 : 1));
+      const absorbed = Math.min(S.player.block, raw);
+      S.player.block -= absorbed;
+      raw -= absorbed;
+      if (absorbed > 0) log('player', '格挡 -' + absorbed);
+      if (raw > 0) S.player.hp -= raw;
+      log('boss', S.enemy.name + ' 造成 ' + raw + ' 伤害');
+    } else if (intent.kind === 'block') {
+      S.enemy.block += intent.value;
+      log('boss', S.enemy.name + ' 获得 ' + intent.value + ' 格挡');
+    }
+
+    if (hasEquip('retainBlock3')) {
+      S.player.block = Math.min(S.player.block, 3);
+    } else {
+      S.player.block = 0;
+    }
+
+    if (S.player.hp <= 0) {
+      S.player.hp = 0;
+      endBattle(false);
+      return;
+    }
+    startTurn();
+  }
+
+  function endBattle(win) {
+    S.win = win;
+    S.over = true;
+    onEnd(win, S);
+  }
+
+  function emit() {
+    onChange(S);
+  }
+
+  return {
+    state: () => S,
+    preview,
+    start(nodeIndex, deckIds, equip, hp, cbChange, cbLog, cbEnd) {
+      const node = NODES[nodeIndex];
+      const isBoss = node.enemyId === 'boss';
+      const template = isBoss ? bossByChapter(GAME.bossChapter) : enemyById(node.enemyId);
+      S = {
+        nodeIndex,
+        node,
+        boss: isBoss ? template : null,
+        enemy: {
+          id: template.id, name: template.name, icon: template.icon,
+          hp: template.hp, maxHp: template.hp,
+          block: isBoss ? (template.startBlock || 0) : 0,
+          vuln: 0, boss: isBoss, stacks: 0,
+          intents: (isBoss ? template.attack : template.intents).slice(),
+          currentIntent: null
+        },
+        player: { hp: hp, maxHp: GAME.playerHp, block: 0, vuln: 0, energy: 0 },
+        deck: shuffle(deckIds.map(cardById).filter(Boolean)),
+        hand: [], discard: [], powers: [],
+        turn: 0, turnMult: GAME.multBase, baseMult: GAME.multBase, attacksThisTurn: 0,
+        equip: equip.slice(), over: false, win: false
+      };
+      onChange = cbChange;
+      onLog = cbLog;
+      onEnd = cbEnd;
+      startTurn();
+    },
+    playCard,
+    endTurn
+  };
+})();
+
+</script>
+  <script>// 《七日回雪》v4 卡牌原型 · 界面渲染、拖拽出牌与效果动画
+'use strict';
+
+const UI = (function () {
+  const $ = sel => document.querySelector(sel);
+  let lastTurn = 0;
+  let inspectIndex = null;
+  let inspectTimer = null;
+  let drag = null;
+  let busy = false;
+  let prevState = null;
+  let prevHandCount = 0;
+
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById('screen-' + name);
+    if (el) el.classList.add('active');
+  }
+
+  function cardMarkup(c, idx) {
+    const typeLabel = { attack: '攻击', skill: '技能', power: '能力' }[c.type];
+    return '<div class="card type-' + c.type + '" data-idx="' + idx + '">'
+      + '<div class="cost">' + c.cost + '</div>'
+      + '<div class="type-badge ' + c.type + '">' + typeLabel + '</div>'
+      + '<div class="c-icon">' + c.icon + '</div>'
+      + '<div class="c-name">' + c.name + '</div>'
+      + '<div class="c-desc">' + c.desc + '</div>'
+      + '</div>';
+  }
+
+  function snapshot(S) {
+    return { hp: S.player.hp, block: S.player.block, energy: S.player.energy, turnMult: S.turnMult, enemyHp: S.enemy.hp, enemyBlock: S.enemy.block };
+  }
+  function animateNum(el, from, to, fmt) {
+    if (!el) return;
+    const dur = 360, start = performance.now();
+    function step(ts) {
+      const t = Math.min(1, (ts - start) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const v = Math.round(from + (to - from) * eased);
+      el.textContent = fmt(v);
+      if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  function shakeEl(el) { if (!el) return; el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+  function wobbleEl(el) { if (!el) return; el.classList.remove('wobble'); void el.offsetWidth; el.classList.add('wobble'); }
+
+  function animateDiffs(prev, S) {
+    if (!prev) return;
+    if (prev.hp !== S.player.hp) { animateNum($('#bar-hp'), prev.hp, S.player.hp, v => v + '/' + S.player.maxHp); wobbleEl($('#bar-hp')); }
+    if (prev.block !== S.player.block) { animateNum($('#bar-block'), prev.block, S.player.block, v => String(v)); wobbleEl($('#bar-block')); }
+    if (prev.energy !== S.player.energy) { animateNum($('#bar-energy'), prev.energy, S.player.energy, v => v + '/' + GAME.energy); wobbleEl($('#bar-energy')); }
+    if (prev.turnMult !== S.turnMult) { wobbleEl($('#stat-mult')); if (!busy) animateNum($('#score-mult'), prev.turnMult, S.turnMult, v => Math.round(v * 10) / 10); }
+  }
+
+  function shakeEquipOnTurn(S) {
+    S.equip.forEach((id, i) => {
+      const e = id ? equipById(id) : null;
+      if (!e) return;
+      if (['startBlock3', 'startDraw1', 'startEnergy1', 'baseMult1'].indexOf(e.effect) >= 0) shakeEl($('#equip-' + i));
+    });
+  }
+
+  function renderBars(S) {
+    $('#hp-fill').style.width = Math.max(0, (S.player.hp / S.player.maxHp) * 100) + '%';
+    $('#bar-hp').textContent = S.player.hp + '/' + S.player.maxHp;
+    $('#block-fill').style.width = Math.min(100, (S.player.block / GAME.blockCap) * 100) + '%';
+    $('#bar-block').textContent = S.player.block;
+    $('#energy-fill').style.width = Math.min(100, (S.player.energy / GAME.energy) * 100) + '%';
+    $('#bar-energy').textContent = S.player.energy + '/' + GAME.energy;
+  }
+
+  function renderCombat(S) {
+    if (!S) return;
+    if (S.turn && S.turn !== lastTurn) { lastTurn = S.turn; prevHandCount = 0; shakeEquipOnTurn(S); }
+    if (prevState && !busy) animateDiffs(prevState, S);
+
+    $('#node-label').textContent = S.node.label + ' · 第 ' + S.turn + ' 回合';
+    $('#stat-mult').textContent = '✖ 倍数 ' + (Math.round(S.turnMult * 10) / 10);
+    if (!busy) $('#score-mult').textContent = Math.round(S.turnMult * 10) / 10;
+
+    $('#enemy-icon').textContent = S.enemy.icon;
+    $('#enemy-name').textContent = S.enemy.name;
+    $('#enemy-hp').textContent = S.enemy.hp + '/' + S.enemy.maxHp;
+    $('#enemy-hp-fill').style.width = Math.max(0, (S.enemy.hp / S.enemy.maxHp) * 100) + '%';
+    $('#enemy-block').textContent = '🛡 ' + S.enemy.block;
+    $('#enemy-vuln').classList.toggle('hidden', S.enemy.vuln <= 0);
+    const stacksEl = $('#enemy-stacks');
+    if (S.enemy.boss) { stacksEl.textContent = '克扣 ' + (S.enemy.stacks || 0); stacksEl.classList.toggle('hidden', (S.enemy.stacks || 0) <= 0); } else { stacksEl.classList.add('hidden'); }
+
+    const intent = S.enemy.currentIntent;
+    if (intent) {
+      let txt = '攻击 ' + intent.value;
+      if (intent.kind === 'attackVuln') txt = '攻击 ' + intent.value + ' + 易伤';
+      if (intent.kind === 'block') txt = '格挡 ' + intent.value;
+      $('#enemy-intent').textContent = txt;
+    }
+
+    for (let i = 0; i < 3; i++) {
+      const slot = $('#equip-' + i);
+      const id = S.equip[i];
+      const e = id ? equipById(id) : null;
+      if (e) { slot.classList.add('filled'); slot.innerHTML = '<div class="eq-name">' + e.icon + ' ' + e.name + '</div><div class="eq-desc">' + e.desc + '</div>'; }
+      else { slot.classList.remove('filled'); slot.innerHTML = '技能牌'; }
+    }
+
+    renderBars(S);
+
+    const newCards = Math.max(0, S.hand.length - prevHandCount);
+    const hand = $('#hand');
+    hand.classList.toggle('stacked', S.hand.length > 5);
+    hand.innerHTML = S.hand.map((c, i) => cardMarkup(c, i)).join('');
+    hand.querySelectorAll('.card').forEach(el => {
+      const i = parseInt(el.dataset.idx, 10);
+      const c = S.hand[i];
+      if (S.over || S.player.energy < c.cost) el.classList.add('disabled');
+      if (i === inspectIndex) el.classList.add('inspect');
+      if (i >= S.hand.length - newCards) el.classList.add('draw-in');
+    });
+
+    $('#draw-count').textContent = '牌堆 ' + S.deck.length;
+    $('#discard-count').textContent = '弃牌 ' + S.discard.length;
+    prevState = snapshot(S);
+  }
+
+  function resetTurn() { lastTurn = 0; inspectIndex = null; busy = false; prevState = null; }
+
+  function pushLog(kind, text) {
+    const list = $('#log-list');
+    if (!list) return;
+    const line = document.createElement('div');
+    line.className = 'log-line ' + kind;
+    line.textContent = text;
+    list.appendChild(line);
+    while (list.children.length > 6) list.firstChild.remove();
+    setTimeout(() => line.classList.add('fade'), 1500);
+    setTimeout(() => line.remove(), 2200);
+  }
+
+  function initInteraction() {
+    const hand = $('#hand');
+    hand.addEventListener('pointerdown', onDown);
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  }
+
+  function onDown(e) {
+    if (busy) return;
+    const cardEl = e.target.closest('.card');
+    if (!cardEl || cardEl.dataset.idx == null) return;
+    const i = parseInt(cardEl.dataset.idx, 10);
+    const S = Combat.state();
+    if (!S || S.over) return;
+    const p = Combat.preview(i);
+    if (!p.playable) return;
+    drag = { i, startX: e.clientX, startY: e.clientY, moved: false, cardEl };
+    cardEl.classList.add('held');
+    const ghost = $('#drag-ghost');
+    ghost.innerHTML = cardEl.outerHTML;
+    ghost.classList.remove('hidden');
+    moveGhost(e.clientX, e.clientY);
+    e.preventDefault();
+  }
+
+  function onMove(e) {
+    if (!drag) return;
+    const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY;
+    if (dx * dx + dy * dy > 49) drag.moved = true;
+    moveGhost(e.clientX, e.clientY);
+    $('#combat-zone').classList.toggle('active', isOverZone(e.clientX, e.clientY));
+  }
+
+  function onUp(e) {
+    if (!drag) return;
+    const over = isOverZone(e.clientX, e.clientY);
+    $('#combat-zone').classList.remove('active');
+    const ghost = $('#drag-ghost');
+    ghost.classList.add('hidden');
+    ghost.innerHTML = '';
+    drag.cardEl.classList.remove('held');
+    const i = drag.i;
+    const moved = drag.moved;
+    drag = null;
+    if (over) playDropped(i);
+    else if (!moved) inspectCard(i);
+  }
+
+  function moveGhost(x, y) {
+    const g = $('#drag-ghost');
+    g.style.left = x + 'px';
+    g.style.top = y + 'px';
+  }
+  function isOverZone(x, y) {
+    const el = document.elementFromPoint(x, y);
+    return !!(el && el.closest('#combat-zone'));
+  }
+
+  function inspectCard(i) {
+    inspectIndex = i;
+    renderCombat(Combat.state());
+    if (inspectTimer) clearTimeout(inspectTimer);
+    inspectTimer = setTimeout(() => { inspectIndex = null; renderCombat(Combat.state()); }, 2400);
+  }
+
+  // —— 动画辅助 ——
+  function rectCenter(el) { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+  function flyIcon(icon, from, to, duration, onDone) {
+    const layer = $('#fx-layer');
+    const el = document.createElement('div');
+    el.className = 'fx-fly';
+    el.textContent = icon;
+    el.style.left = from.x + 'px';
+    el.style.top = from.y + 'px';
+    layer.appendChild(el);
+    const dx = to.x - from.x, dy = to.y - from.y;
+    const base = 'translate(-50%, -50%)';
+    const anim = el.animate([
+      { transform: base + ' translate(0,0) scale(1)', opacity: 1 },
+      { transform: base + ' translate(' + dx + 'px,' + dy + 'px) scale(1.3)', opacity: 1 }
+    ], { duration: duration, easing: 'ease-in', fill: 'forwards' });
+    anim.onfinish = () => { el.remove(); if (onDone) onDone(); };
+  }
+  function suckZoneTo(target, duration, onDone) {
+    const zone = $('#zone-card');
+    if (!zone || target == null) { if (onDone) onDone(); return; }
+    const from = rectCenter(zone);
+    const to = rectCenter(target);
+    const dx = to.x - from.x, dy = to.y - from.y;
+    const anim = zone.animate([
+      { transform: 'translate(0,0) scale(1)', opacity: 1 },
+      { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(.15)', opacity: .2 }
+    ], { duration: duration, easing: 'ease-in', fill: 'forwards' });
+    anim.onfinish = () => { hideZoneCard(); if (onDone) onDone(); };
+  }
+  function hitEnemyFx() {
+    const card = document.querySelector('.enemy-card');
+    if (!card) return;
+    card.classList.remove('enemy-hit');
+    void card.offsetWidth;
+    card.classList.add('enemy-hit');
+    setTimeout(() => card.classList.remove('enemy-hit'), 380);
+  }
+  function doHitFlies(card, hits, onDone) {
+    let count = 0;
+    function next() {
+      if (count >= hits) { if (onDone) onDone(); return; }
+      count++;
+      const from = rectCenter($('#score-dmg'));
+      const to = rectCenter($('#enemy-icon'));
+      flyIcon(card.icon, from, to, 260, () => { hitEnemyFx(); setTimeout(next, 130); });
+    }
+    next();
+  }
+  function showVortex() { const v = $('#score-vortex'); v.classList.remove('hidden'); v.classList.add('active'); }
+  function hideVortex() { const v = $('#score-vortex'); v.classList.add('hidden'); v.classList.remove('active'); }
+  function targetForSkill(card) {
+    if (!card.effects || card.effects.length === 0) return $('#score-mult');
+    const e = card.effects[0];
+    if (e.type === 'block') return $('#bar-block');
+    if (e.type === 'energy') return $('#bar-energy');
+    if (e.type === 'heal') return $('#bar-hp');
+    if (e.type === 'draw') return $('#draw-count');
+    if (e.type === 'multAdd' || e.type === 'multMul') return $('#score-mult');
+    return $('#score-mult');
+  }
+
+  function playDropped(i) {
+    const S = Combat.state();
+    if (!S || S.over) return;
+    const card = S.hand[i];
+    if (!card) return;
+
+    if (card.type === 'attack') {
+      busy = true;
+      showZoneCard(card);
+      showVortex();
+      suckZoneTo($('#score-dmg'), 500, hideVortex);
+      const p = Combat.preview(i);
+      const hits = (p && p.numbers) ? p.numbers.hits : 1;
+      animateScore(i, () => {
+        doHitFlies(card, hits, () => {
+          Combat.playCard(i);
+          resetScoreDamage();
+          hideVortex();
+          busy = false;
+          renderCombat(Combat.state());
+        });
+      });
+    } else {
+      busy = true;
+      showZoneCard(card);
+      shakeEl($('#zone-card'));
+      const target = targetForSkill(card);
+      suckZoneTo(target, 500, () => {
+        setTimeout(() => {
+          Combat.playCard(i);
+          hideZoneCard();
+          busy = false;
+          renderCombat(Combat.state());
+        }, 120);
+      });
+    }
+  }
+
+  function showZoneCard(card) {
+    const el = $('#zone-card');
+    el.innerHTML = cardMarkup(card, 0);
+    el.classList.remove('hidden');
+  }
+  function hideZoneCard() {
+    $('#zone-card').classList.add('hidden');
+    $('#zone-card').innerHTML = '';
+  }
+  function resetScoreDamage() {
+    $('#score-dmg').textContent = '0';
+    $('#score-result').textContent = '';
+  }
+
+  function animateScore(i, done) {
+    const p = Combat.preview(i);
+    const nums = p && p.numbers;
+    if (!nums) { done(); return; }
+    const dmgEl = $('#score-dmg'), multEl = $('#score-mult'), resEl = $('#score-result');
+    resEl.textContent = '';
+    const targetChips = nums.chips;
+    const targetMult = Math.max(1, nums.mult);
+    const targetTotal = nums.total;
+    const start = performance.now();
+    const dur = 620;
+    function step(ts) {
+      const t = Math.min(1, (ts - start) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      dmgEl.textContent = Math.round(targetChips * eased);
+      multEl.textContent = Math.round((1 + (targetMult - 1) * eased) * 10) / 10;
+      if (t < 1) requestAnimationFrame(step);
+      else { dmgEl.textContent = targetChips; multEl.textContent = targetMult; resEl.textContent = '= ' + targetTotal + ' 总伤害'; setTimeout(done, 420); }
+    }
+    requestAnimationFrame(step);
+  }
+
+  function isBusy() { return busy; }
+
+  function showReward(type, title, options, skipText, onPick, onSkip) {
+    const modal = document.getElementById('modal-reward');
+    const cards = options.map((item, i) => {
+      if (type === 'card') return cardMarkup(item, i);
+      return '<div class="card type-power" data-idx="' + i + '">'
+        + '<div class="type-badge power">技能牌</div>'
+        + '<div class="c-icon">' + item.icon + '</div>'
+        + '<div class="c-name">' + item.name + '</div>'
+        + '<div class="c-desc">' + item.desc + '</div>'
+        + '</div>';
+    }).join('');
+    modal.innerHTML = '<h3>' + title + '</h3>'
+      + '<div class="body">点击选择，' + (skipText || '或跳过') + '。</div>'
+      + '<div class="reward-grid">' + cards + '</div>'
+      + '<div class="reward-actions">'
+      + '<button class="btn" id="reward-skip">' + (skipText || '跳过') + '</button>'
+      + '</div>';
+    modal.classList.remove('hidden');
+    modal.querySelectorAll('.reward-grid .card').forEach(el => {
+      el.addEventListener('click', () => { modal.classList.add('hidden'); onPick(parseInt(el.dataset.idx, 10)); });
+    });
+    modal.querySelector('#reward-skip').addEventListener('click', () => { modal.classList.add('hidden'); onSkip(); });
+  }
+
+  function showBossDeath(onDone) {
+    const el = $('#boss-death');
+    el.classList.remove('hidden');
+    setTimeout(() => { el.classList.add('hidden'); if (onDone) onDone(); }, 1000);
+  }
+
+  function showResult(win, text) {
+    $('#result-big').textContent = win ? '🏆' : '❄️';
+    $('#result-title').textContent = win ? '守住了临雪市' : '差一点…';
+    $('#result-text').textContent = text;
+    showScreen('result');
+  }
+
+  return {
+    showScreen, renderCombat, resetTurn, pushLog, initInteraction, isBusy,
+    showReward, showBossDeath, showResult
+  };
+})();
+
+
+
+
+
+
+</script>
+  <script>// 《七日回雪》v4 卡牌原型 · 主流程
+'use strict';
+
+let Run = {
+  deck: STARTER_DECK.slice(),
+  equip: [null, null, null],
+  hp: GAME.playerHp,
+  node: 0
+};
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function sample(arr, n) {
+  return shuffle(arr).slice(0, n);
+}
+
+function init() {
+  bind();
+  UI.initInteraction();
+  UI.showScreen('menu');
+}
+
+function bind() {
+  document.getElementById('btn-start').addEventListener('click', startRun);
+  document.getElementById('btn-restart').addEventListener('click', startRun);
+  document.getElementById('btn-end-turn').addEventListener('click', () => {
+    if (UI.isBusy()) return;
+    Combat.endTurn();
+  });
+}
+
+function startRun() {
+  Run = {
+    deck: STARTER_DECK.slice(),
+    equip: [null, null, null],
+    hp: GAME.playerHp,
+    node: 0
+  };
+  showInitialEquip();
+}
+
+function showInitialEquip() {
+  const options = sample(EQUIPMENTS, 3);
+  UI.showReward('equip', '开局技能牌三选一', options, '不装备', idx => {
+    Run.equip[0] = options[idx].id;
+    beginBattle(0);
+  }, () => beginBattle(0));
+}
+
+function beginBattle(nodeIndex) {
+  Run.node = nodeIndex;
+  UI.showScreen('run');
+  UI.resetTurn();
+  const node = NODES[nodeIndex];
+  const enemyName = node.enemyId === 'boss' ? bossByChapter(GAME.bossChapter).name : enemyById(node.enemyId).name;
+  UI.pushLog('info', '第 ' + (nodeIndex + 1) + ' 战：' + node.label + ' · ' + enemyName);
+  Combat.start(
+    nodeIndex,
+    Run.deck,
+    Run.equip,
+    Math.min(Run.hp, GAME.playerHp),
+    S => UI.renderCombat(S),
+    (kind, text) => UI.pushLog(kind, text),
+    onBattleEnd
+  );
+}
+
+function onBattleEnd(win, S) {
+  Run.hp = S.player.hp;
+
+  if (!win) {
+    UI.showResult(false, '你的构筑还没成型，差一点就能守住。再试一次。');
+    return;
+  }
+
+  if (Run.node >= 3) {
+    UI.showBossDeath(() => UI.showResult(true, '你击败了物业经理，守住了临雪市的物资。'));
+    return;
+  }
+
+  if (Run.node === 1) showEquipReward();
+  else showCardReward();
+}
+
+function showCardReward() {
+  const options = sample(cardPool(), 3);
+  const title = '第 ' + (Run.node + 1) + ' 战胜利奖励';
+  UI.showReward('card', title, options, '跳过 +5 生命', idx => {
+    Run.deck.push(options[idx].id);
+    nextBattle();
+  }, () => {
+    Run.hp = Math.min(GAME.playerHp, Run.hp + 5);
+    nextBattle();
+  });
+}
+
+function showEquipReward() {
+  const pool = EQUIPMENTS.filter(e => Run.equip.indexOf(e.id) < 0);
+  const options = sample(pool, 3);
+  const title = '第 ' + (Run.node + 1) + ' 战技能牌奖励';
+  UI.showReward('equip', title, options, '跳过', idx => {
+    const slot = Run.equip.indexOf(null);
+    if (slot >= 0) Run.equip[slot] = options[idx].id;
+    nextBattle();
+  }, () => nextBattle());
+}
+
+function nextBattle() {
+  beginBattle(Run.node + 1);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+</script>
+</body>
+</html>
+
+
+
+
+
