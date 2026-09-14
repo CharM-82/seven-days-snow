@@ -112,14 +112,15 @@ body { font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", san
 .card .cost { position: absolute; bottom: 4px; left: 5px; width: 18px; height: 18px; border-radius: 50%; background: var(--warm); color: #251500; font-weight: 800; font-size: 11px; display: flex; align-items: center; justify-content: center; }
 .card .type-badge { position: absolute; top: 5px; right: 5px; font-size: 8px; padding: 2px 4px; border-radius: 5px; }
 .type-badge.attack { background: rgba(255,154,168,.16); color: var(--atk); }
-.type-badge.skill { background: rgba(127,212,255,.16); color: var(--skill); }
+.type-badge.armor { background: rgba(127,212,255,.16); color: var(--skill); }
+.type-badge.action { background: rgba(255,215,107,.16); color: var(--gold); }
 .type-badge.power { background: rgba(213,167,255,.16); color: var(--power); }
 .card .c-icon { font-size: 22px; margin-top: 14px; line-height: 1; }
 .card .c-name { font-size: 11px; font-weight: 800; color: #fff; margin-top: 3px; text-align: center; line-height: 1.1; }
 .card .c-desc { font-size: 9px; color: var(--muted); margin-top: 3px; text-align: center; line-height: 1.25; }
-.card.type-attack { border-color: rgba(255,154,168,.55); }
-.card.type-skill { border-color: rgba(127,212,255,.55); }
-.card.type-power { border-color: rgba(213,167,255,.55); }
+.card.kind-attack { background: linear-gradient(180deg, #3b1220, #25111a); border-color: rgba(255,154,168,.55); }
+.card.kind-armor { background: linear-gradient(180deg, #0f2a3d, #101f31); border-color: rgba(127,212,255,.55); }
+.card.kind-action { background: linear-gradient(180deg, #3d320f, #251f0f); border-color: rgba(255,215,107,.55); }
 
 /* 下方状态条 */
 #player-bars { display: flex; flex-direction: column; gap: 4px; padding: 4px 12px 6px; }
@@ -161,6 +162,7 @@ body { font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", san
 .reward-grid .card { width: auto; min-height: 118px; }
 .reward-actions { display: flex; gap: 10px; margin-top: 14px; }
 .reward-actions .btn { flex: 1; }
+
 
 
 
@@ -223,6 +225,7 @@ body { font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", san
           <div class="score-item"><span class="score-label">倍数</span><span class="score-num" id="score-mult">1</span></div>
         </div>
         <div class="score-result" id="score-result"></div>
+        <div id="attack-queue"></div>
         <div id="zone-card" class="hidden"></div>
         <div class="drop-hint">拖到这里出牌</div>
       </div>
@@ -239,7 +242,7 @@ body { font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", san
           <div class="pbar-track"><div class="pbar-fill hp" id="hp-fill"></div><span class="pbar-text" id="bar-hp">60/60</span></div>
         </div>
         <div class="pbar">
-          <div class="pbar-label">格挡</div>
+          <div class="pbar-label">护甲</div>
           <div class="pbar-track"><div class="pbar-fill block" id="block-fill"></div><span class="pbar-text" id="bar-block">0</span></div>
         </div>
         <div class="pbar">
@@ -254,6 +257,7 @@ body { font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", san
       </div>
 
       <div id="fx-layer"></div>
+      <div id="screen-fx" class="hidden"></div>
       <div id="log-list"></div>
       <div id="boss-death" class="hidden"><div class="boss-death-text">BOSS 击破！</div></div>
       <div id="drag-ghost" class="hidden"></div>
@@ -289,7 +293,7 @@ const GAME = {
 const CARDS = [
   // 初始牌组
   { id: 'pick', name: '破冰镐', type: 'attack', cost: 1, icon: '⛏️', desc: '造成 6 基础伤害', damage: 6, hits: 1, starter: true },
-  { id: 'wrap', name: '御寒裹紧', type: 'skill', cost: 1, icon: '🧥', desc: '获得 5 格挡', effects: [{ type: 'block', value: 5 }], starter: true },
+  { id: 'wrap', name: '御寒裹紧', type: 'skill', cost: 1, icon: '🧥', desc: '获得 5 护甲', effects: [{ type: 'block', value: 5 }], starter: true },
   { id: 'ration', name: '应急口粮', type: 'skill', cost: 0, icon: '🍫', desc: '抽 1 张牌', effects: [{ type: 'draw', value: 1 }], starter: true },
   { id: 'stock', name: '清点物资', type: 'skill', cost: 0, icon: '📦', desc: '本回合 倍数 +1', effects: [{ type: 'multAdd', value: 1 }], starter: true },
   { id: 'expose', name: '当众揭发', type: 'attack', cost: 1, icon: '📢', desc: '造成 5 伤害，施加 1 易伤', damage: 5, hits: 1, effects: [{ type: 'vuln', value: 1 }], starter: true },
@@ -305,27 +309,27 @@ const CARDS = [
 
   // 奖励技能牌
   { id: 'gen', name: '柴油发电机', type: 'skill', cost: 1, icon: '⚡', desc: '获得 1 行动力', effects: [{ type: 'energy', value: 1 }] },
-  { id: 'layer', name: '加厚保温层', type: 'skill', cost: 1, icon: '🧵', desc: '获得 8 格挡', effects: [{ type: 'block', value: 8 }] },
+  { id: 'layer', name: '加厚保温层', type: 'skill', cost: 1, icon: '🧵', desc: '获得 8 护甲', effects: [{ type: 'block', value: 8 }] },
   { id: 'list', name: '物资清单', type: 'skill', cost: 0, icon: '📋', desc: '本回合 倍数 +2', effects: [{ type: 'multAdd', value: 2 }] },
   { id: 'huddle', name: '抱团取暖', type: 'skill', cost: 1, icon: '🤝', desc: '本回合 倍数 ×2', effects: [{ type: 'multMul', value: 2 }] },
   { id: 'rush', name: '雪夜急行', type: 'skill', cost: 0, icon: '🌨️', desc: '抽 2 张牌', effects: [{ type: 'draw', value: 2 }] },
   { id: 'soup', name: '热汤', type: 'skill', cost: 1, icon: '🍲', desc: '恢复 5 生命', effects: [{ type: 'heal', value: 5 }] },
-  { id: 'unity', name: '团结互助', type: 'skill', cost: 1, icon: '🫂', desc: '倍数 ×1.5，获得 4 格挡', effects: [{ type: 'multMul', value: 1.5 }, { type: 'block', value: 4 }] },
+  { id: 'unity', name: '团结互助', type: 'skill', cost: 1, icon: '🫂', desc: '倍数 ×1.5，获得 4 护甲', effects: [{ type: 'multMul', value: 1.5 }, { type: 'block', value: 4 }] },
   { id: 'torch', name: '火炬', type: 'skill', cost: 1, icon: '🔥', desc: '本回合 倍数 +3', effects: [{ type: 'multAdd', value: 3 }] },
 
   // 能力牌
   { id: 'avalanche', name: '雪崩预警', type: 'power', cost: 2, icon: '🚨', desc: '每回合开始 倍数 +1', power: { kind: 'startMult', value: 1 } },
-  { id: 'thermo', name: '恒温系统', type: 'power', cost: 2, icon: '🌡️', desc: '每回合开始获得 4 格挡', power: { kind: 'startBlock', value: 4 } },
+  { id: 'thermo', name: '恒温系统', type: 'power', cost: 2, icon: '🌡️', desc: '每回合开始获得 4 护甲', power: { kind: 'startBlock', value: 4 } },
   { id: 'battery', name: '备用电源', type: 'power', cost: 1, icon: '🔋', desc: '每回合开始获得 1 行动力', power: { kind: 'startEnergy', value: 1 } },
   { id: 'network', name: '情报网', type: 'power', cost: 1, icon: '📡', desc: '每回合开始抽 1 张牌', power: { kind: 'startDraw', value: 1 } }
 ];
 
 const EQUIPMENTS = [
-  { id: 'quilt', name: '旧棉被', icon: '🛏️', desc: '每回合开始格挡 +3', effect: 'startBlock3' },
+  { id: 'quilt', name: '旧棉被', icon: '🛏️', desc: '每回合开始护甲 +3', effect: 'startBlock3' },
   { id: 'heater', name: '热力贴', icon: '♨️', desc: '每回合开始 倍数 +1', effect: 'baseMult1' },
   { id: 'radio', name: '对讲机', icon: '📻', desc: '每回合开始抽 1 张牌', effect: 'startDraw1' },
   { id: 'gen2', name: '备用发电机', icon: '⚙️', desc: '每回合开始行动力 +1', effect: 'startEnergy1' },
-  { id: 'tent', name: '保温帐篷', icon: '⛺', desc: '回合结束保留最多 3 格挡', effect: 'retainBlock3' },
+  { id: 'tent', name: '保温帐篷', icon: '⛺', desc: '回合结束保留最多 3 护甲', effect: 'retainBlock3' },
   { id: 'dossier', name: '集团密档', icon: '🗂️', desc: '每回合第一张攻击伤害 ×1.5', effect: 'firstAttack15' }
 ];
 
@@ -351,7 +355,7 @@ const BOSSES = [
     attack: [{ kind: 'attack', value: 10 }, { kind: 'attack', value: 10 }, { kind: 'attack', value: 12, hits: 2 }],
     defense: { startBlock: 8, regen: 8, every: 2 },
     antiAttack: { stack: 1, desc: '攻击牌使 Boss 获得 1 层配给，攻击时每层 +1 伤害' },
-    antiSkill: { desc: '技能牌触发 Boss 清除自身易伤并 +3 格挡' }
+    antiSkill: { desc: '技能牌触发 Boss 清除自身易伤并 +3 护甲' }
   },
   {
     id: 'boss3', chapter: 3, name: '安保队长', icon: '💂', hp: 140, startBlock: 10,
@@ -363,7 +367,7 @@ const BOSSES = [
   },
   {
     id: 'boss4', chapter: 4, name: '核心高管', icon: '🧛', hp: 175, startBlock: 12,
-    core: { name: '信息封锁', desc: '每回合开始随机 1 张手牌费用 +1；若玩家未出牌，Boss +6 格挡' },
+    core: { name: '信息封锁', desc: '每回合开始随机 1 张手牌费用 +1；若玩家未出牌，Boss +6 护甲' },
     attack: [{ kind: 'attack', value: 14 }, { kind: 'attack', value: 14 }, { kind: 'attack', value: 16, hits: 2 }, { kind: 'attack', value: 22 }],
     defense: { startBlock: 12, regen: 12, every: 3 },
     antiAttack: { stack: 1, desc: '攻击牌使 Boss 获得 1 层封锁，攻击时每层 +1 伤害' },
@@ -371,7 +375,7 @@ const BOSSES = [
   },
   {
     id: 'boss5', chapter: 5, name: '周鸿安', icon: '👔', hp: 210, startBlock: 14,
-    core: { name: '白夜倒计时', desc: '第 6 回合起每回合结束造成 10 点不可格挡伤害，每回合 +5' },
+    core: { name: '白夜倒计时', desc: '第 6 回合起每回合结束造成 10 点不可护甲伤害，每回合 +5' },
     attack: [{ kind: 'attack', value: 16 }, { kind: 'attack', value: 16 }, { kind: 'attack', value: 24, hits: 2 }, { kind: 'attack', value: 24 }],
     defense: { startBlock: 14, regen: 14, every: 3 },
     antiAttack: { desc: '攻击牌使 Boss 下回合攻击 +2' },
@@ -393,6 +397,7 @@ function equipById(id) { return EQUIPMENTS.find(e => e.id === id); }
 function enemyById(id) { return ENEMIES.find(e => e.id === id); }
 function bossByChapter(ch) { return BOSSES.find(b => b.chapter === ch) || BOSSES[0]; }
 function cardPool() { return CARDS.filter(c => !c.starter); }
+
 </script>
   <script>// 《七日回雪》v4 卡牌原型 · 战斗状态机（带事件播报）
 'use strict';
@@ -441,7 +446,7 @@ const Combat = (function () {
     const d = S.boss.defense;
     if (d && d.every && d.regen && S.turn % d.every === 0) {
       S.enemy.block += d.regen;
-      log('boss', S.enemy.name + ' 获得 ' + d.regen + ' 格挡');
+      log('boss', S.enemy.name + ' 获得 ' + d.regen + ' 护甲');
     }
   }
 
@@ -459,7 +464,7 @@ const Combat = (function () {
     startBlock += pow('startBlock');
     if (startBlock > 0) {
       S.player.block += startBlock;
-      log('player', '获得 ' + startBlock + ' 格挡');
+      log('player', '获得 ' + startBlock + ' 护甲');
     }
 
     draw(GAME.drawPerTurn);
@@ -492,7 +497,7 @@ const Combat = (function () {
 
   function previewEffect(e) {
     switch (e.type) {
-      case 'block': return '获得 ' + e.value + ' 格挡';
+      case 'block': return '获得 ' + e.value + ' 护甲';
       case 'draw': return '抽 ' + e.value + ' 张牌';
       case 'energy': return '行动力 +' + e.value;
       case 'heal': return '恢复 ' + e.value + ' 生命';
@@ -507,7 +512,7 @@ const Combat = (function () {
     switch (e.type) {
       case 'block':
         S.player.block += e.value;
-        log('player', '获得 ' + e.value + ' 格挡');
+        log('player', '获得 ' + e.value + ' 护甲');
         break;
       case 'draw':
         draw(e.value);
@@ -536,6 +541,19 @@ const Combat = (function () {
     }
   }
 
+  function attackNumbers(card) {
+    let baseDmg = card.damage;
+    if (card.bonus) {
+      if (card.bonus.type === 'hpLe' && S.player.hp <= card.bonus.value) baseDmg *= card.bonus.mult;
+      if (card.bonus.type === 'attacksThisTurn') baseDmg += card.bonus.per * S.attacksThisTurn;
+    }
+    let hits = card.hits || 1;
+    if (card.bonus && card.bonus.type === 'multGe' && S.turnMult >= card.bonus.value) hits += (card.bonus.extraHits || 0);
+    const chips = baseDmg * hits;
+    const total = Math.round(chips * S.turnMult);
+    return { chips, hits, mult: S.turnMult, total };
+  }
+
   function preview(i) {
     if (!S || S.over) return { playable: false };
     const card = S.hand[i];
@@ -544,24 +562,16 @@ const Combat = (function () {
       return { playable: true, kind: 'power', text: '能力：' + card.desc };
     }
     if (card.type === 'attack') {
-      let baseDmg = card.damage;
-      if (card.bonus) {
-        if (card.bonus.type === 'hpLe' && S.player.hp <= card.bonus.value) baseDmg *= card.bonus.mult;
-        if (card.bonus.type === 'attacksThisTurn') baseDmg += card.bonus.per * S.attacksThisTurn;
-      }
-      let hits = card.hits || 1;
-      if (card.bonus && card.bonus.type === 'multGe' && S.turnMult >= card.bonus.value) hits += (card.bonus.extraHits || 0);
-      const chips = baseDmg * hits;
-      const total = Math.round(chips * S.turnMult);
-      let text = '基础伤害 ' + chips + ' × 倍数 ' + fmt(S.turnMult) + ' = ' + total + ' 伤害';
-      if (S.enemy.block > 0) text += '；敌方格挡 ' + S.enemy.block + ' 会先抵扣';
+      const n = attackNumbers(card);
+      let text = '基础伤害 ' + n.chips + ' × 倍数 ' + fmt(S.turnMult) + ' = ' + n.total + ' 伤害';
+      if (S.enemy.block > 0) text += '；敌方护甲 ' + S.enemy.block + ' 会先抵扣';
       if (card.effects) {
         for (const e of card.effects) {
           const t = previewEffect(e);
           if (t) text += '；' + t;
         }
       }
-      return { playable: true, kind: 'attack', text, numbers: { chips, hits, mult: S.turnMult, total } };
+      return { playable: true, kind: 'attack', text, numbers: n };
     }
     if (card.type === 'skill') {
       const parts = card.effects.map(previewEffect).filter(Boolean);
@@ -628,6 +638,44 @@ const Combat = (function () {
     return { played: true, log: logText };
   }
 
+  function takeCardFromHand(i) {
+    if (S.over) return null;
+    const card = S.hand[i];
+    if (!card || S.player.energy < card.cost) return null;
+    S.player.energy -= card.cost;
+    S.hand.splice(i, 1);
+    emit();
+    return card;
+  }
+
+  function resolveAttack(card) {
+    if (S.over) return { played: false, log: '' };
+    let dmg = card.damage;
+    if (card.bonus) {
+      if (card.bonus.type === 'hpLe' && S.player.hp <= card.bonus.value) dmg *= card.bonus.mult;
+      if (card.bonus.type === 'attacksThisTurn') dmg += card.bonus.per * S.attacksThisTurn;
+    }
+    let hits = card.hits || 1;
+    if (card.bonus && card.bonus.type === 'multGe' && S.turnMult >= card.bonus.value) hits += (card.bonus.extraHits || 0);
+    let applied = 0;
+    for (let h = 0; h < hits; h++) applied += hitEnemy(dmg);
+    S.attacksThisTurn += 1;
+    if (card.effects) {
+      for (const e of card.effects) {
+        if (e.type === 'vuln') { S.enemy.vuln += e.value; log('boss', S.enemy.name + ' 获得 ' + e.value + ' 易伤'); }
+        else if (e.type === 'draw') { draw(e.value); log('player', '抽 ' + e.value + ' 张牌'); }
+      }
+    }
+    S.discard.push(card);
+    bossOnPlayerCard(card);
+    if (S.enemy.hp <= 0) {
+      S.enemy.hp = 0;
+      endBattle(true);
+    } else {
+      emit();
+    }
+    return { played: true, log: card.name + '：造成 ' + applied + ' 伤害' };
+  }
   function endTurn() {
     if (S.over) return;
     S.discard = S.discard.concat(S.hand);
@@ -648,12 +696,12 @@ const Combat = (function () {
       const absorbed = Math.min(S.player.block, raw);
       S.player.block -= absorbed;
       raw -= absorbed;
-      if (absorbed > 0) log('player', '格挡 -' + absorbed);
+      if (absorbed > 0) log('player', '护甲 -' + absorbed);
       if (raw > 0) S.player.hp -= raw;
       log('boss', S.enemy.name + ' 造成 ' + raw + ' 伤害');
     } else if (intent.kind === 'block') {
       S.enemy.block += intent.value;
-      log('boss', S.enemy.name + ' 获得 ' + intent.value + ' 格挡');
+      log('boss', S.enemy.name + ' 获得 ' + intent.value + ' 护甲');
     }
 
     if (hasEquip('retainBlock3')) {
@@ -683,6 +731,9 @@ const Combat = (function () {
   return {
     state: () => S,
     preview,
+    attackNumbers,
+    takeCardFromHand,
+    resolveAttack,
     start(nodeIndex, deckIds, equip, hp, cbChange, cbLog, cbEnd) {
       const node = NODES[nodeIndex];
       const isBoss = node.enemyId === 'boss';
@@ -716,6 +767,11 @@ const Combat = (function () {
 })();
 
 
+
+
+
+
+
 </script>
   <script>// 《七日回雪》v4 卡牌原型 · 界面渲染、拖拽出牌与效果动画
 'use strict';
@@ -730,6 +786,8 @@ const UI = (function () {
   let prevState = null;
   let prevHandKey = '';
   let prevHandLen = 0;
+  let attackQueue = [];
+  let queueProcessing = false;
 
   function showScreen(name) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -737,12 +795,25 @@ const UI = (function () {
     if (el) el.classList.add('active');
   }
 
+  function kindOf(card) {
+    if (card.type === 'attack') return 'attack';
+    if (card.effects && card.effects.some(e => e.type === 'block')) return 'armor';
+    return 'action';
+  }
+  function kindOfEquip(e) {
+    if (e.effect === 'startBlock3' || e.effect === 'retainBlock3') return 'armor';
+    return 'action';
+  }
+  function kindLabel(kind) {
+    return { attack: '攻击', armor: '护甲', action: '行动' }[kind] || '行动';
+  }
+
   function cardMarkup(c, idx) {
-    const typeLabel = { attack: '攻击', skill: '技能', power: '能力' }[c.type];
-    return '<div class="card type-' + c.type + '" data-idx="' + idx + '">'
+    const kind = kindOf(c);
+    return '<div class="card kind-' + kind + '" data-idx="' + idx + '">'
       + '<div class="corner-icon">' + c.icon + '</div>'
       + '<div class="cost">' + c.cost + '</div>'
-      + '<div class="type-badge ' + c.type + '">' + typeLabel + '</div>'
+      + '<div class="type-badge ' + kind + '">' + kindLabel(kind) + '</div>'
       + '<div class="c-icon">' + c.icon + '</div>'
       + '<div class="c-name">' + c.name + '</div>'
       + '<div class="c-desc">' + c.desc + '</div>'
@@ -828,6 +899,7 @@ const UI = (function () {
 
     renderBars(S);
     syncHand(S);
+    renderQueue();
 
     $('#draw-count').textContent = '牌堆 ' + S.deck.length;
     $('#discard-count').textContent = '弃牌 ' + S.discard.length;
@@ -882,7 +954,7 @@ const UI = (function () {
       cards.forEach(el => { el.style.marginLeft = ''; });
     }
   }
-  function resetTurn() { lastTurn = 0; inspectIndex = null; busy = false; prevState = null; prevHandKey = ''; prevHandLen = 0; }
+  function resetTurn() { lastTurn = 0; inspectIndex = null; busy = false; prevState = null; prevHandKey = ''; prevHandLen = 0; attackQueue = []; queueProcessing = false; }
 
   function pushLog(kind, text) {
     const list = $('#log-list');
@@ -1023,28 +1095,73 @@ const UI = (function () {
     return $('#score-mult');
   }
 
+  function renderQueue() {
+    const el = $('#attack-queue');
+    if (!el) return;
+    el.innerHTML = attackQueue.map(c => {
+      const kind = kindOf(c);
+      return '<div class="queue-card kind-' + kind + '">' + c.icon + '<span class="queue-cost">' + c.cost + '</span></div>';
+    }).join('');
+  }
+
+  function triggerScreenFx(kind) {
+    const fx = $('#screen-fx');
+    if (!fx) return;
+    fx.classList.remove('hidden', 'fx-blue', 'fx-yellow');
+    if (kind === 'armor') fx.classList.add('fx-blue');
+    else if (kind === 'action') fx.classList.add('fx-yellow');
+    setTimeout(() => { fx.classList.remove('fx-blue', 'fx-yellow'); fx.classList.add('hidden'); }, 320);
+  }
+
+  function processQueue() {
+    if (queueProcessing) return;
+    if (attackQueue.length === 0) {
+      busy = false;
+      renderCombat(Combat.state());
+      return;
+    }
+    queueProcessing = true;
+    busy = true;
+    const card = attackQueue.shift();
+    renderQueue();
+    showZoneCard(card);
+    showVortex();
+    const nums = Combat.attackNumbers(card);
+    animateScoreNums(nums, () => {
+      doHitFlies(card, nums ? nums.hits : 1, () => {
+        Combat.resolveAttack(card);
+        hideZoneCard();
+        hideVortex();
+        queueProcessing = false;
+        renderQueue();
+        if (Combat.state().over) {
+          busy = false;
+          return;
+        }
+        processQueue();
+      });
+    });
+  }
+
   function playDropped(i) {
     const S = Combat.state();
     if (!S || S.over) return;
     const card = S.hand[i];
     if (!card) return;
-    const p = Combat.preview(i);
-    const nums = p && p.numbers;
-    const hits = nums ? nums.hits : 1;
 
     if (card.type === 'attack') {
-      busy = true;
-      Combat.playCard(i);
-      showZoneCard(card);
-      showVortex();
-      animateScoreNums(nums, () => { hideVortex(); hideZoneCard(); });
-      doHitFlies(card, hits, () => {});
-      setTimeout(() => { busy = false; }, 180);
+      const taken = Combat.takeCardFromHand(i);
+      if (taken) {
+        attackQueue.push(taken);
+        renderQueue();
+        if (!queueProcessing) processQueue();
+      }
     } else {
       busy = true;
       Combat.playCard(i);
       showZoneCard(card);
       shakeEl($('#zone-card'));
+      triggerScreenFx(kindOf(card));
       suckZoneTo(targetForSkill(card), 220, hideZoneCard);
       setTimeout(() => { busy = false; }, 180);
     }
@@ -1090,8 +1207,9 @@ const UI = (function () {
     const modal = document.getElementById('modal-reward');
     const cards = options.map((item, i) => {
       if (type === 'card') return cardMarkup(item, i);
-      return '<div class="card type-power" data-idx="' + i + '">'
-        + '<div class="type-badge power">技能牌</div>'
+      const kind = kindOfEquip(item);
+      return '<div class="card kind-' + kind + '" data-idx="' + i + '">'
+        + '<div class="type-badge ' + kind + '">' + kindLabel(kind) + '</div>'
         + '<div class="c-icon">' + item.icon + '</div>'
         + '<div class="c-name">' + item.name + '</div>'
         + '<div class="c-desc">' + item.desc + '</div>'
@@ -1128,6 +1246,14 @@ const UI = (function () {
     showReward, showBossDeath, showResult
   };
 })();
+
+
+
+
+
+
+
+
 
 
 
@@ -1264,6 +1390,8 @@ document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
+
+
 
 
 
