@@ -824,18 +824,7 @@ const UI = (function () {
     }
 
     renderBars(S);
-
-    const newCards = Math.max(0, S.hand.length - prevHandCount);
-    const hand = $('#hand');
-    hand.classList.toggle('stacked', S.hand.length > 5);
-    hand.innerHTML = S.hand.map((c, i) => cardMarkup(c, i)).join('');
-    hand.querySelectorAll('.card').forEach(el => {
-      const i = parseInt(el.dataset.idx, 10);
-      const c = S.hand[i];
-      if (S.over || S.player.energy < c.cost) el.classList.add('disabled');
-      if (i === inspectIndex) el.classList.add('inspect');
-      if (i >= S.hand.length - newCards) el.classList.add('draw-in');
-    });
+    syncHand(S);
 
     $('#draw-count').textContent = '牌堆 ' + S.deck.length;
     $('#discard-count').textContent = '弃牌 ' + S.discard.length;
@@ -1149,6 +1138,7 @@ const UI = (function () {
     showReward, showBossDeath, showResult
   };
 })();
+
 
 
 
