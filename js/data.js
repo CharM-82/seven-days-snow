@@ -42,7 +42,19 @@ const CARDS = [
   { id: 'avalanche', name: '雪崩预警', type: 'power', cost: 2, icon: '🚨', desc: '每回合开始 倍数 +1', power: { kind: 'startMult', value: 1 } },
   { id: 'thermo', name: '恒温系统', type: 'power', cost: 2, icon: '🌡️', desc: '每回合开始获得 4 护甲', power: { kind: 'startBlock', value: 4 } },
   { id: 'battery', name: '备用电源', type: 'power', cost: 1, icon: '🔋', desc: '每回合开始获得 1 行动力', power: { kind: 'startEnergy', value: 1 } },
-  { id: 'network', name: '情报网', type: 'power', cost: 1, icon: '📡', desc: '每回合开始抽 1 张牌', power: { kind: 'startDraw', value: 1 } }
+  { id: 'network', name: '情报网', type: 'power', cost: 1, icon: '📡', desc: '每回合开始抽 1 张牌', power: { kind: 'startDraw', value: 1 } },
+
+  // 破冰者普通基础手牌
+  { id: 'bs-strike', name: '碎冰斩', type: 'attack', cost: 1, icon: '🪓', desc: '造成 6 点伤害', damage: 6, hits: 1, starter: true, cardFamily: 'basic-hand', classId: 'breaker' },
+  { id: 'bs-frost', name: '寒霜回旋', type: 'attack', cost: 1, icon: '❄️', desc: '造成 3 点伤害，命中 2 次', damage: 3, hits: 2, starter: true, cardFamily: 'basic-hand', classId: 'breaker' },
+  { id: 'bs-block', name: '冰壳', type: 'skill', cost: 1, icon: '🧊', desc: '获得 5 点护甲', effects: [{ type: 'block', value: 5 }], starter: true, cardFamily: 'basic-hand', classId: 'breaker' },
+  { id: 'bs-overpower', name: '破冰突进', type: 'attack', cost: 2, icon: '💥', desc: '造成 10 点伤害', damage: 10, hits: 1, starter: true, cardFamily: 'basic-hand', classId: 'breaker' },
+
+  // 守望者普通基础手牌
+  { id: 'sn-shield', name: '盾击', type: 'attack', cost: 1, icon: '🛡️', desc: '造成 4 点伤害', damage: 4, hits: 1, starter: true, cardFamily: 'basic-hand', classId: 'guardian' },
+  { id: 'sn-fortify', name: '坚守阵线', type: 'skill', cost: 1, icon: '🏰', desc: '获得 7 点护甲', effects: [{ type: 'block', value: 7 }], starter: true, cardFamily: 'basic-hand', classId: 'guardian' },
+  { id: 'sn-rally', name: '战场号令', type: 'skill', cost: 1, icon: '📣', desc: '获得 1 点行动力，抽 1 张牌', effects: [{ type: 'energy', value: 1 }, { type: 'draw', value: 1 }], starter: true, cardFamily: 'basic-hand', classId: 'guardian' },
+  { id: 'sn-comeback', name: '守势反击', type: 'attack', cost: 2, icon: '🔥', desc: '造成 8 点伤害；生命≤30 时基础伤害×2', damage: 8, hits: 1, bonus: { type: 'hpLe', value: 30, mult: 2 }, starter: true, cardFamily: 'basic-hand', classId: 'guardian' }
 ];
 
 const EQUIPMENTS = [
@@ -104,6 +116,57 @@ const BOSSES = [
   }
 ];
 
+const BOSS_BUFFS = {
+  boss1: [
+    { id: 'access-control', name: '克扣门禁', icon: '🔒', desc: '玩家出牌增加克扣，Boss 攻击时消耗克扣并增伤' },
+    { id: 'scheduled-maintenance', name: '定期维护', icon: '🛠️', desc: '每 3 回合 +6 护甲' }
+  ],
+  boss2: [
+    { id: 'ration-limit', name: '配给限额', icon: '📦', desc: '每回合第 3 张及之后的牌费用 +1' }
+  ],
+  boss3: [
+    { id: 'patrol-alert', name: '巡逻警戒', icon: '🚨', desc: '警戒期间玩家攻击伤害 -50%，首次受击解除并反伤' }
+  ],
+  boss4: [
+    { id: 'info-block', name: '信息封锁', icon: '📵', desc: '每回合随机 1 张手牌费用 +1；未出牌则 Boss +6 护甲' }
+  ],
+  boss5: [
+    { id: 'white-night', name: '白夜倒计时', icon: '⏳', desc: '第 6 回合起每回合结束造成递增不可护甲伤害' }
+  ]
+};
+
+const BOSS_DECKS = {
+  boss1: [
+    { id: 'boss-property-warning', name: '违规通知', owner: 'boss', kind: 'debuff', icon: '📄', desc: '使玩家获得 1 层易伤' },
+    { id: 'boss-property-fee', name: '临时加费', owner: 'boss', kind: 'attack', icon: '💰', desc: '造成 6 点伤害，+1 克扣' },
+    { id: 'boss-property-inspection', name: '例行检查', owner: 'boss', kind: 'armor', icon: '🔍', desc: '获得 6 点护甲' }
+  ],
+  boss2: [
+    { id: 'boss2-pile', name: '堆箱', owner: 'boss', kind: 'armor', icon: '📦', desc: '获得护甲' },
+    { id: 'boss2-stock', name: '库存盘点', owner: 'boss', kind: 'debuff', icon: '📋', desc: '强化下一次攻击' },
+    { id: 'boss2-lock', name: '封锁通道', owner: 'boss', kind: 'debuff', icon: '🚧', desc: '限制玩家出牌' },
+    { id: 'boss2-crush', name: '仓库重压', owner: 'boss', kind: 'attack', icon: '🏗️', desc: '高额伤害' }
+  ],
+  boss3: [
+    { id: 'boss3-baton', name: '棍击', owner: 'boss', kind: 'attack', icon: '🏏', desc: '造成伤害' },
+    { id: 'boss3-chain', name: '连续催收', owner: 'boss', kind: 'attack', icon: '⛓️', desc: '连续伤害' },
+    { id: 'boss3-break', name: '破坏护甲', owner: 'boss', kind: 'debuff', icon: '🔨', desc: '削减玩家护甲' },
+    { id: 'boss3-block', name: '围堵', owner: 'boss', kind: 'armor', icon: '🚔', desc: '获得护甲' }
+  ],
+  boss4: [
+    { id: 'boss4-cold', name: '寒潮', owner: 'boss', kind: 'debuff', icon: '❄️', desc: '限制玩家行动力' },
+    { id: 'boss4-notice', name: '冻结通告', owner: 'boss', kind: 'debuff', icon: '📄', desc: '使手牌失效' },
+    { id: 'boss4-fence', name: '冰霜护栏', owner: 'boss', kind: 'armor', icon: '🧊', desc: '获得护甲' },
+    { id: 'boss4-fee', name: '降温费', owner: 'boss', kind: 'attack', icon: '💰', desc: '造成伤害' }
+  ],
+  boss5: [
+    { id: 'boss5-final', name: '最终催缴', owner: 'boss', kind: 'attack', icon: '📬', desc: '高额伤害' },
+    { id: 'boss5-stop', name: '全区停摆', owner: 'boss', kind: 'debuff', icon: '⛔', desc: '限制玩家出牌' },
+    { id: 'boss5-reset', name: '合约重置', owner: 'boss', kind: 'debuff', icon: '🔁', desc: '切换阶段' },
+    { id: 'boss5-clear', name: '终局清算', owner: 'boss', kind: 'attack', icon: '🏢', desc: '最终伤害' }
+  ]
+};
+
 const NODES = [
   { label: '外围', enemyId: 'looter' },
   { label: '仓储区', enemyId: 'hoarder' },
@@ -117,14 +180,16 @@ function cardById(id) { return CARDS.find(c => c.id === id); }
 function equipById(id) { return EQUIPMENTS.find(e => e.id === id); }
 function enemyById(id) { return ENEMIES.find(e => e.id === id); }
 function bossByChapter(ch) { return BOSSES.find(b => b.chapter === ch) || BOSSES[0]; }
+function bossBuffs(id) { return BOSS_BUFFS[id] || []; }
+function bossDeck(id) { return BOSS_DECKS[id] || []; }
 function cardPool() { return CARDS.filter(c => !c.starter); }
 // —— 职业 / 技能卡 / 商店配置（大厅系统）——
 const CLASSES = [
   { id: 'breaker', name: '破冰者', icon: '⛏️', desc: '攻击爆发',
-    starterDeck: ['pick','pick','pick','pick','icicle','icicle','hammer','stock','huddle','torch'],
+    starterDeck: ['bs-strike','bs-strike','bs-strike','bs-strike','bs-frost','bs-frost','bs-block','bs-block','bs-block','bs-overpower'],
     passive: null },
   { id: 'guardian', name: '守望者', icon: '🛡️', desc: '护甲防御 · 绝地反击',
-    starterDeck: ['wrap','wrap','wrap','wrap','layer','layer','unity','soup','ration','expose'],
+    starterDeck: ['sn-shield','sn-shield','sn-shield','sn-fortify','sn-fortify','sn-fortify','sn-rally','sn-rally','sn-comeback','sn-comeback'],
     passive: { id: 'lastStand', name: '绝地反击', desc: '撑过10回合后，本场战斗直接获胜' } }
 ];
 

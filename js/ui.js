@@ -116,6 +116,12 @@ const UI = (function () {
     $('#enemy-vuln').classList.toggle('hidden', S.enemy.vuln <= 0);
     const stacksEl = $('#enemy-stacks');
     if (S.enemy.boss) { stacksEl.textContent = '克扣 ' + (S.enemy.stacks || 0); stacksEl.classList.toggle('hidden', (S.enemy.stacks || 0) <= 0); } else { stacksEl.classList.add('hidden'); }
+    const buffsEl = $('#boss-buffs');
+    if (S.enemy.boss) {
+      const buffs = bossBuffs(S.boss.id) || [];
+      buffsEl.innerHTML = buffs.map(b => '<span class="boss-buff"><span class="bb-icon">' + b.icon + '</span>' + b.name + '</span>').join('');
+      buffsEl.classList.toggle('hidden', buffs.length === 0);
+    } else buffsEl.classList.add('hidden');
 
     const intent = S.enemy.currentIntent;
     if (intent) {

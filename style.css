@@ -559,3 +559,8 @@ html, body { background: var(--page-bg); }
 /* 修正旧规则对商城页的居中，恢复为整宽滚动 */
 #screen-shop { align-items: stretch; justify-content: flex-start; }
 .page-scroll { width: 100%; }
+
+/* Boss 增益徽章 */
+.boss-buffs { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+.boss-buff { font-size: 10px; padding: 3px 7px; border-radius: 999px; background: rgba(241,189,79,.12); border: 1px solid rgba(241,189,79,.35); color: var(--gold-soft); font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+.bb-icon { font-size: 12px; line-height: 1; }
