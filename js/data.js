@@ -58,12 +58,12 @@ const CARDS = [
 ];
 
 const EQUIPMENTS = [
-  { id: 'quilt', name: '旧棉被', icon: '🛏️', desc: '每回合开始护甲 +3', effect: 'startBlock3' },
-  { id: 'heater', name: '热力贴', icon: '♨️', desc: '每回合开始 倍数 +1', effect: 'baseMult1' },
-  { id: 'radio', name: '对讲机', icon: '📻', desc: '每回合开始抽 1 张牌', effect: 'startDraw1' },
-  { id: 'gen2', name: '备用发电机', icon: '⚙️', desc: '每回合开始行动力 +1', effect: 'startEnergy1' },
-  { id: 'tent', name: '保温帐篷', icon: '⛺', desc: '回合结束保留最多 3 护甲', effect: 'retainBlock3' },
-  { id: 'dossier', name: '集团密档', icon: '🗂️', desc: '每回合第一张攻击伤害 ×1.5', effect: 'firstAttack15' }
+  { id: 'quilt', name: '旧棉被', icon: '🛏️', desc: '每回合开始护甲 +3', effect: 'startBlock3', rarity: 'normal', powerTags: [], dropWeight: 1 },
+  { id: 'heater', name: '热力贴', icon: '♨️', desc: '每回合开始 倍数 +1', effect: 'baseMult1', rarity: 'advanced', powerTags: ['mult'], dropWeight: 1 },
+  { id: 'radio', name: '对讲机', icon: '📻', desc: '每回合开始抽 1 张牌', effect: 'startDraw1', rarity: 'normal', powerTags: [], dropWeight: 1 },
+  { id: 'gen2', name: '备用发电机', icon: '⚙️', desc: '每回合开始行动力 +1', effect: 'startEnergy1', rarity: 'normal', powerTags: [], dropWeight: 1 },
+  { id: 'tent', name: '保温帐篷', icon: '⛺', desc: '回合结束保留最多 3 护甲', effect: 'retainBlock3', rarity: 'normal', powerTags: [], dropWeight: 1 },
+  { id: 'dossier', name: '集团密档', icon: '🗂️', desc: '每回合第一张攻击伤害 ×1.5', effect: 'firstAttack15', rarity: 'special', powerTags: ['multiply'], dropWeight: 0.3 }
 ];
 
 const ENEMIES = [
@@ -265,31 +265,41 @@ const CLASSES = [
 ];
 
 const SKILL_CARDS = [
-  { id: 'reserve', name: '蓄势待发', icon: '⚡', desc: '回合结束剩 n≥3 行动力 → 下一回合第一张牌数值 ×n', effect: 'reserve' },
-  { id: 'emptySlot', name: '空槽倍率', icon: '🈳', desc: '倍率 = 空槽数；空槽=0 时攻击无效', effect: 'emptySlot' },
-  { id: 'freeArmor', name: '免费护甲', icon: '🛡️', desc: '护甲类手牌费用变 0', effect: 'freeArmor' },
-  { id: 'echoLast', name: '最后出手重触发', icon: '🔁', desc: '每回合最后打出的手牌效果再触发一次', effect: 'echoLast' },
-  { id: 'attachMult', name: '附加牌倍率', icon: '➕', desc: '每用一张附加牌，倍率 +0.2（暂未生效）', effect: 'attachMult' },
-  { id: 'deckDmg', name: '牌堆加伤', icon: '📚', desc: '抽牌堆每剩 1 张未抽卡，伤害 +2', effect: 'deckDmg' },
-  { id: 'gamble', name: '豪赌', icon: '🎲', desc: '每回合倍数 +15；回合结束 1/6 概率自毁', effect: 'gamble' },
-  { id: 'fifth', name: '五连击', icon: '✋', desc: '全场每第5张牌，该牌数值 ×4', effect: 'fifth' },
-  { id: 'randomMult', name: '随机倍率', icon: '🎰', desc: '每次出牌，倍数 += 随机 1~10', effect: 'randomMult' },
-  { id: 'decay', name: '强弩之末', icon: '🏹', desc: '+50 伤害，每打 1 张牌 -5（全场累计）', effect: 'decay' }
+  { id: 'reserve', name: '蓄势待发', icon: '⚡', desc: '回合结束剩 n≥3 行动力 → 下一回合第一张牌数值 ×n', effect: 'reserve', rarity: 'advanced', powerTags: ['mult'], dropWeight: 0.6 },
+  { id: 'emptySlot', name: '空槽倍率', icon: '🈳', desc: '倍率 = 空槽数；空槽=0 时攻击无效', effect: 'emptySlot', rarity: 'special', powerTags: ['coreRule'], dropWeight: 0.3 },
+  { id: 'freeArmor', name: '免费护甲', icon: '🛡️', desc: '护甲类手牌费用变 0', effect: 'freeArmor', rarity: 'advanced', powerTags: ['cost'], dropWeight: 1 },
+  { id: 'echoLast', name: '最后出手重触发', icon: '🔁', desc: '每回合最后打出的手牌效果再触发一次', effect: 'echoLast', rarity: 'special', powerTags: ['retrigger'], dropWeight: 0.3 },
+  { id: 'attachMult', name: '附加牌倍率', icon: '➕', desc: '每用一张附加牌，倍率 +0.2（暂未生效）', effect: 'attachMult', rarity: 'normal', powerTags: [], dropWeight: 1 },
+  { id: 'deckDmg', name: '牌堆加伤', icon: '📚', desc: '抽牌堆每剩 1 张未抽卡，伤害 +2', effect: 'deckDmg', rarity: 'advanced', powerTags: ['damage'], dropWeight: 1 },
+  { id: 'gamble', name: '豪赌', icon: '🎲', desc: '每回合倍数 +15；回合结束 1/6 概率自毁', effect: 'gamble', rarity: 'special', powerTags: ['multiply'], dropWeight: 0.3 },
+  { id: 'fifth', name: '五连击', icon: '✋', desc: '全场每第5张牌，该牌数值 ×4', effect: 'fifth', rarity: 'special', powerTags: ['multiply'], dropWeight: 0.3 },
+  { id: 'randomMult', name: '随机倍率', icon: '🎰', desc: '每次出牌，倍数 += 随机 1~10', effect: 'randomMult', rarity: 'advanced', powerTags: ['mult'], dropWeight: 1 },
+  { id: 'decay', name: '强弩之末', icon: '🏹', desc: '+50 伤害，每打 1 张牌 -5（全场累计）', effect: 'decay', rarity: 'advanced', powerTags: ['damage'], dropWeight: 1 }
 ];
 
 const ALL_SKILL_CARDS = EQUIPMENTS.concat(SKILL_CARDS);
 
 const SHOP = {
-  startGold: 30, winGold: 12, eliteGold: 22, bossGold: 32,
-  normalPackCost: 18, premiumPackCost: 36, skillPackCost: 30, shopCardCost: 30,
+  startGold: 4, winGold: 3, eliteGold: 5, bossGold: 8,
+  normalPackCost: 4, premiumPackCost: 7, skillPackCost: 6,
   normalPackSize: 6, premiumPackSize: 8, skillPackSize: 6,
-  resetBaseCost: 8, resetCostStep: 6
+  resetBaseCost: 5, resetCostStep: 1,
+  interestPer: 5, interestCap: 5, energyRewardCap: 3,
+  deleteBaseCost: 3, deleteCostStep: 1
 };
 
 function classById(id) { return CLASSES.find(c => c.id === id); }
 function skillById(id) { return ALL_SKILL_CARDS.find(e => e.id === id); }
 function handPool() { return CARDS.filter(c => !c.starter); }
+const SKILL_RARITY = {
+  normal: { color: '#4D9DE0', label: '普通', weight: 80 },
+  advanced: { color: '#39B878', label: '进阶', weight: 18 },
+  special: { color: '#F49A38', label: '特殊', weight: 2 }
+};
 function skillPool() { return ALL_SKILL_CARDS; }
+function weightedSkillPool() {
+  return ALL_SKILL_CARDS.map(s => ({ id: s.id, weight: (s.dropWeight || 1) * (SKILL_RARITY[s.rarity] ? SKILL_RARITY[s.rarity].weight : 0) }));
+}
 
 
 
@@ -329,4 +339,4 @@ function validateData() {
   if (errors.length) console.warn('[data-validate]', errors);
   return errors;
 }
-if (typeof module !== 'undefined' && module.exports) module.exports = { GAME, CARDS, EQUIPMENTS, ENEMIES, BOSSES, NODES, CLASSES, SKILL_CARDS, ALL_SKILL_CARDS, SHOP, BOSS_BUFFS, BOSS_DECKS, cardById, equipById, enemyById, bossByChapter, cardPool, classById, skillById, handPool, skillPool, bossBuffs, bossDeck, validateData, CHAPTERS, chapterById };
+if (typeof module !== 'undefined' && module.exports) module.exports = { GAME, CARDS, EQUIPMENTS, ENEMIES, BOSSES, NODES, CLASSES, SKILL_CARDS, ALL_SKILL_CARDS, SHOP, BOSS_BUFFS, BOSS_DECKS, cardById, equipById, enemyById, bossByChapter, cardPool, classById, skillById, handPool, skillPool, bossBuffs, bossDeck, validateData, CHAPTERS, chapterById, SKILL_RARITY, weightedSkillPool };

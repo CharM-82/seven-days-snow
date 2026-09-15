@@ -22,9 +22,9 @@ const STATS_KEY = 'qirihui-stats';
 let Settings = { reducedMotion: false };
 
 const QUESTS = [
-  { id: 'winBattle', name: '完成一场战斗', target: 1, reward: 20 },
-  { id: 'visitShop', name: '进入一次补给站', target: 1, reward: 10 },
-  { id: 'killBoss', name: '击败一个 Boss', target: 1, reward: 50 }
+  { id: 'winBattle', name: '完成一场战斗', target: 1, reward: 2 },
+  { id: 'visitShop', name: '进入一次补给站', target: 1, reward: 1 },
+  { id: 'killBoss', name: '击败一个 Boss', target: 1, reward: 2 }
 ];
 
 function shuffle(arr) { return RNG.shuffle(arr); }
@@ -38,11 +38,13 @@ function init() {
   if (saved) {
     Run = Object.assign({}, Run, saved);
     if (!Run.route && Run.chapter) Run.route = chapterById(Run.chapter).nodes;
+    if (!Run.shop) restockShop();
+    renderHome();
+    navTo('home');
+  } else {
+    showHeroes();
   }
-  if (!Run.shop) restockShop();
   if (!Run.seed) Run.seed = RNG.seed(Date.now());
-  renderHome();
-  navTo('home');
   if (typeof validateData === 'function') validateData();
 }
 
@@ -69,7 +71,7 @@ function goMapOrHome() {
   else goHome();
 }
 function showPlay() { if (!Run.classId) { showHeroes(); return; } renderPlay(); navTo('play'); }
-function showHeroes() { renderHeroes(); navTo('heroes'); }
+function showHeroes() { setShell(false); renderHeroes(); UI.showScreen('heroes'); }
 function showShop() { if (!Run.classId) { showHeroes(); return; } renderShop(); navTo('shop'); }
 
 function bind() {
@@ -156,10 +158,31 @@ function newRun(classId) {
   saveRun();
 }
 
+function skillPrice(skill) {
+  if (!skill || !skill.rarity) return SHOP.skillPackCost;
+  return { normal: 5, advanced: 7, special: 10 }[skill.rarity] || SHOP.skillPackCost;
+}
+function weightedSampleSkills(n) {
+  const pool = weightedSkillPool();
+  const total = pool.reduce((a, b) => a + b.weight, 0);
+  const out = [];
+  const used = new Set();
+  let guard = 0;
+  while (out.length < n && used.size < pool.length && guard < 100) {
+    guard++;
+    let r = RNG.next() * total;
+    let pick = pool[pool.length - 1];
+    for (const p of pool) { r -= p.weight; if (r <= 0) { pick = p; break; } }
+    if (used.has(pick.id)) continue;
+    used.add(pick.id);
+    out.push(skillById(pick.id));
+  }
+  return out;
+}
 function restockShop() {
   Run.shop = {
     packs: { normal: true, premium: true, skill: true },
-    slots: sample(skillPool(), 3),
+    slots: weightedSampleSkills(3),
     resetCost: SHOP.resetBaseCost
   };
 }
@@ -316,7 +339,9 @@ function renderHeroDetail(id) {
     + '<button class="btn btn-primary comic-btn hd-select" data-id="' + c.id + '">选择出战</button>';
   detail.querySelector('.hd-select').addEventListener('click', () => {
     newRun(id);
-    goHome();
+    setShell(true);
+    renderHome();
+    navTo('home');
   });
 }
 
@@ -452,7 +477,8 @@ function renderShop() {
 
   document.getElementById('shop-slots').innerHTML = Run.shop.slots.map((s, i) => {
     if (!s) return '<div class="shop-card comic-panel disabled"><div class="sc-name">已售空</div><div class="sc-desc">—</div></div>';
-    return '<div class="shop-card comic-panel" data-idx="' + i + '"><div class="sc-name">' + s.icon + ' ' + s.name + '</div><div class="sc-desc">' + s.desc + '</div><div class="sc-price">' + SHOP.shopCardCost + ' 金币</div></div>';
+    const price = skillPrice(s);
+    return '<div class="shop-card comic-panel" data-idx="' + i + '"><div class="sc-name">' + s.icon + ' ' + s.name + '</div><div class="sc-badge rarity-' + s.rarity + '">' + (SKILL_RARITY[s.rarity] ? SKILL_RARITY[s.rarity].label : '') + '</div><div class="sc-desc">' + s.desc + '</div><div class="sc-price">' + price + ' 金币</div></div>';
   }).join('');
   document.querySelectorAll('#shop-slots .shop-card[data-idx]').forEach(el => el.addEventListener('click', () => {
     buyShopSlot(parseInt(el.dataset.idx, 10));
@@ -470,7 +496,7 @@ function buyPack(kind) {
   let cost, size, pick, pool, title, isSkill;
   if (kind === 'normal') { cost = SHOP.normalPackCost; size = SHOP.normalPackSize; pick = 1; pool = handPool(); title = '普通手卡包（选 1 张）'; isSkill = false; }
   else if (kind === 'premium') { cost = SHOP.premiumPackCost; size = SHOP.premiumPackSize; pick = 2; pool = handPool(); title = '高级手卡包（选 2 张）'; isSkill = false; }
-  else { cost = SHOP.skillPackCost; size = SHOP.skillPackSize; pick = 1; pool = skillPool(); title = '技能卡包（选 1 张）'; isSkill = true; }
+  else { cost = SHOP.skillPackCost; size = SHOP.skillPackSize; pick = 1; pool = weightedSampleSkills(size); title = '技能卡包（选 1 张）'; isSkill = true; }
   if (Run.gold < cost) return;
   Run.gold -= cost;
   Run.shop.packs[kind] = false;
@@ -488,8 +514,8 @@ function buyPack(kind) {
 function buyShopSlot(i) {
   const skill = Run.shop.slots[i];
   if (!skill) return;
-  if (Run.gold < SHOP.shopCardCost) return;
-  Run.gold -= SHOP.shopCardCost;
+  if (Run.gold < skillPrice(skill)) return;
+  Run.gold -= skillPrice(skill);
   Run.shop.slots[i] = null;
   addSkill(skill.id);
   saveRun();
@@ -540,6 +566,9 @@ function onBattleEnd(win, S) {
   }
 
   const node = Run.route[Run.nodeIndex];
+  const interest = Math.min(SHOP.interestCap, Math.floor(Run.gold / SHOP.interestPer));
+  const energyReward = Math.min(SHOP.energyRewardCap, S.player.energy);
+  Run.gold += interest + energyReward;
   const gold = node.type === 'boss' ? SHOP.bossGold : node.type === 'elite' ? SHOP.eliteGold : SHOP.winGold;
   Run.gold += gold;
   addStat('battlesWon', 1);
@@ -578,7 +607,7 @@ function onBattleEnd(win, S) {
     UI.showEnemyDeath(() => {
       document.getElementById('result-big').textContent = '✅';
       document.getElementById('result-title').textContent = '战斗胜利';
-      document.getElementById('result-text').textContent = '获得 ' + gold + ' 金币，商店已重新补货。';
+      document.getElementById('result-text').textContent = '利息 +' + interest + '，行动力奖励 +' + energyReward + '，战斗奖励 +' + gold + ' 金币。';
       document.getElementById('btn-restart').textContent = '继续';
       UI.showScreen('result');
     }, enemy);

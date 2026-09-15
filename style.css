@@ -610,3 +610,13 @@ html.reduced-motion *, html.reduced-motion *::before, html.reduced-motion *::aft
 .bp-stats { margin-top: 8px; font-size: 13px; color: var(--paper-100); }
 .bp-core { margin: 10px 0 12px; font-size: 12px; color: var(--paper-400); line-height: 1.5; }
 #bp-start, #bp-cancel { width: 100%; margin-top: 8px; }
+
+/* 开局全屏职业选择 */
+#screen-heroes { padding: 20px 14px; }
+#screen-heroes .page-scroll { display: flex; flex-direction: column; justify-content: center; }
+
+/* 技能品质 */
+.rarity-normal { color: #4D9DE0; }
+.rarity-advanced { color: #39B878; }
+.rarity-special { color: #F49A38; }
+.sc-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 5px; margin-top: 4px; border: 1px solid currentColor; }
