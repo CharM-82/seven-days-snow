@@ -32,7 +32,7 @@
         <div class="enemy-card">
           <div class="enemy-icon" id="enemy-icon">👊</div>
           <div class="enemy-name" id="enemy-name">物业打手</div>
-          <div class="bar"><div class="bar-fill hp-fill" id="enemy-hp-fill"></div></div>
+          <div class="bar" role="progressbar" aria-label="敌人生命"><div class="bar-fill hp-fill" id="enemy-hp-fill"></div></div>
           <div class="enemy-sub">
             <span id="enemy-hp">20/20</span>
             <span id="enemy-block">🛡 0</span>
@@ -71,21 +71,21 @@
       <div id="player-bars">
         <div class="pbar">
           <div class="pbar-label">生命</div>
-          <div class="pbar-track"><div class="pbar-fill hp" id="hp-fill"></div><span class="pbar-text" id="bar-hp">60/60</span></div>
+          <div class="pbar-track" role="progressbar" aria-label="生命"><div class="pbar-fill hp" id="hp-fill"></div><span class="pbar-text" id="bar-hp">60/60</span></div>
         </div>
         <div class="pbar">
           <div class="pbar-label">护甲</div>
-          <div class="pbar-track"><div class="pbar-fill block" id="block-fill"></div><span class="pbar-text" id="bar-block">0</span></div>
+          <div class="pbar-track" role="progressbar" aria-label="护甲"><div class="pbar-fill block" id="block-fill"></div><span class="pbar-text" id="bar-block">0</span></div>
         </div>
         <div class="pbar">
           <div class="pbar-label">行动力</div>
-          <div class="pbar-track"><div class="pbar-fill energy" id="energy-fill"></div><span class="pbar-text" id="bar-energy">3/3</span></div>
+          <div class="pbar-track" role="progressbar" aria-label="行动力"><div class="pbar-fill energy" id="energy-fill"></div><span class="pbar-text" id="bar-energy">3/3</span></div>
         </div>
       </div>
 
       <div id="bottom-bar">
         <div class="pile"><span id="draw-count">牌堆 0</span><span id="discard-count">弃牌 0</span></div>
-        <button id="btn-end-turn" class="btn btn-end">结束回合</button>
+        <button id="btn-end-turn" class="btn btn-end" aria-label="结束回合">结束回合</button>
       </div>
 
       <div id="fx-layer"></div>
@@ -154,6 +154,7 @@
   <script src="js/main.js"></script>
 </body>
 </html>
+
 
 
 

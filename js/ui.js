@@ -39,7 +39,7 @@ const UI = (function () {
 
   function cardMarkup(c, idx) {
     const kind = kindOf(c);
-    return '<div class="card kind-' + kind + '" data-idx="' + idx + '">'
+    return '<div class="card kind-' + kind + '" data-idx="' + idx + '" tabindex="0" aria-label="' + c.name + '：' + c.desc + '">'
       + '<div class="corner-icon">' + c.icon + '</div>'
       + '<div class="cost">' + c.cost + '</div>'
       + '<div class="type-badge ' + kind + '">' + kindLabel(kind) + '</div>'
