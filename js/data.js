@@ -221,3 +221,32 @@ function handPool() { return CARDS.filter(c => !c.starter); }
 function skillPool() { return ALL_SKILL_CARDS; }
 
 
+
+function validateData() {
+  const errors = [];
+  const seen = new Set();
+  const all = [
+    ...CARDS.map(c => ({ id: c.id, label: 'hand' })),
+    ...EQUIPMENTS.map(c => ({ id: c.id, label: 'skill' })),
+    ...SKILL_CARDS.map(c => ({ id: c.id, label: 'skill' })),
+    ...Object.values(BOSS_DECKS).flat().map(c => ({ id: c.id, label: 'boss' }))
+  ];
+  for (const it of all) {
+    if (seen.has(it.id)) errors.push('重复ID: ' + it.id);
+    seen.add(it.id);
+  }
+  const handIds = new Set(CARDS.map(c => c.id));
+  const skillIds = new Set(ALL_SKILL_CARDS.map(c => c.id));
+  CARDS.filter(c => c.cardFamily === 'basic-hand').forEach(c => {
+    if (skillIds.has(c.id)) errors.push('basic-hand 混入技能池: ' + c.id);
+  });
+  Object.values(BOSS_DECKS).flat().forEach(c => {
+    if (handIds.has(c.id) || skillIds.has(c.id)) errors.push('Boss 牌混入玩家池: ' + c.id);
+  });
+  CLASSES.forEach(cl => cl.starterDeck.forEach(cid => {
+    if (!handIds.has(cid)) errors.push('职业牌引用缺失: ' + cl.id + ' -> ' + cid);
+  }));
+  if (errors.length) console.warn('[data-validate]', errors);
+  return errors;
+}
+if (typeof module !== 'undefined' && module.exports) module.exports = { GAME, CARDS, EQUIPMENTS, ENEMIES, BOSSES, NODES, CLASSES, SKILL_CARDS, ALL_SKILL_CARDS, SHOP, BOSS_BUFFS, BOSS_DECKS, cardById, equipById, enemyById, bossByChapter, cardPool, classById, skillById, handPool, skillPool, bossBuffs, bossDeck, validateData };

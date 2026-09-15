@@ -10,7 +10,7 @@ const Combat = (function () {
   function shuffle(arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(RNG.next() * (i + 1));
       [a[i], a[j]] = [a[j], a[i]];
     }
     return a;
@@ -222,7 +222,7 @@ const Combat = (function () {
     S.player.energy -= cost;
     S.hand.splice(i, 1);
     S.cardsPlayedThisBattle = (S.cardsPlayedThisBattle || 0) + 1;
-    if (hasSkill('randomMult')) { const r = 1 + Math.floor(Math.random()*10); S.turnMult += r; log('player', '随机倍率 +' + r); }
+    if (hasSkill('randomMult')) { const r = RNG.range(1, 10); S.turnMult += r; log('player', '随机倍率 +' + r); }
     let vm = 1;
     if (hasSkill('fifth') && S.cardsPlayedThisBattle % 5 === 0) { vm *= 4; log('player', '五连击！该牌数值 ×4'); }
     if (S.nextFirstMult > 0) { vm *= S.nextFirstMult; log('player', '蓄势待发：该牌数值 ×' + S.nextFirstMult); S.nextFirstMult = 0; }
@@ -284,7 +284,7 @@ const Combat = (function () {
     S.player.energy -= cost;
     S.hand.splice(i, 1);
     S.cardsPlayedThisBattle = (S.cardsPlayedThisBattle || 0) + 1;
-    if (hasSkill('randomMult')) { const r = 1 + Math.floor(Math.random()*10); S.turnMult += r; log('player', '随机倍率 +' + r); }
+    if (hasSkill('randomMult')) { const r = RNG.range(1, 10); S.turnMult += r; log('player', '随机倍率 +' + r); }
     let vm = 1;
     if (hasSkill('fifth') && S.cardsPlayedThisBattle % 5 === 0) { vm *= 4; log('player', '五连击！该牌数值 ×4'); }
     if (S.nextFirstMult > 0) { vm *= S.nextFirstMult; log('player', '蓄势待发：该牌数值 ×' + S.nextFirstMult); S.nextFirstMult = 0; }
@@ -396,7 +396,7 @@ const Combat = (function () {
       log('boss', S.enemy.name + ' 获得 ' + intent.value + ' 护甲');
     }
 
-    if (hasSkill('gamble') && Math.random() < (1/6)) {
+    if (hasSkill('gamble') && RNG.next() < (1/6)) {
       const idx = S.equip.findIndex(id => id && skillById(id) && skillById(id).effect === 'gamble');
       if (idx >= 0) { S.equip[idx] = null; log('boss', '豪赌：该技能卡被摧毁！'); }
     }
@@ -477,3 +477,5 @@ const Combat = (function () {
 
 
 
+
+if (typeof module !== 'undefined' && module.exports) module.exports = { Combat };

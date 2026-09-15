@@ -11,22 +11,17 @@ let Run = {
   shop: null
 };
 
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-function sample(arr, n) { return shuffle(arr).slice(0, n); }
+function shuffle(arr) { return RNG.shuffle(arr); }
+function sample(arr, n) { return RNG.shuffle(arr).slice(0, n); }
 
 function init() {
+  Run.seed = RNG.seed(Date.now());
   bind();
   UI.initInteraction();
   restockShop();
   renderHome();
   navTo('home');
+  if (typeof validateData === 'function') validateData();
 }
 
 function setShell(visible) {
