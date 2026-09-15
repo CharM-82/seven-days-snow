@@ -199,7 +199,9 @@ function renderPlay() {
     } else if (n.type === 'rest') {
       icon = '🏕️'; name = n.label; meta = '恢复生命'; reward = '+15 生命';
     } else {
-      icon = bossByChapter(Run.chapter).icon; name = n.label; meta = 'Boss · ' + bossByChapter(Run.chapter).name; reward = '胜利 +' + SHOP.bossGold + ' 金币';
+      const boss = bossByChapter(Run.chapter);
+      icon = '<img class="boss-emblem" src="' + boss.emblem + '" alt="">';
+      name = boss.name; meta = 'Boss · ' + boss.title; reward = '胜利 +' + SHOP.bossGold + ' 金币';
     }
     return '<div class="mode-card comic-panel' + (n.type === 'boss' ? ' boss' : '') + (done ? ' done' : '') + (current ? ' current' : '') + (locked ? ' locked' : '') + '" data-idx="' + i + '">'
       + '<div class="mode-icon">' + icon + '</div>'
@@ -221,8 +223,10 @@ function renderPlay() {
 function enterNode(i) {
   const node = Run.route[i];
   if (!node) return;
-  if (node.type === 'battle' || node.type === 'elite' || node.type === 'boss') {
+  if (node.type === 'battle' || node.type === 'elite') {
     beginBattle(node);
+  } else if (node.type === 'boss') {
+    showBossPreview(node);
   } else if (node.type === 'shop') {
     if (Run.quests) Run.quests.visitShop = (Run.quests.visitShop || 0) + 1;
     addStat('shopVisits', 1);
@@ -257,6 +261,23 @@ function nextChapter() {
   Run.chapter += 1;
   Run.nodeIndex = 0;
   Run.route = chapterById(Run.chapter).nodes;
+}
+
+// —— Boss 预览 ——
+function showBossPreview(node) {
+  const boss = bossByChapter(Run.chapter);
+  const m = document.getElementById('modal-boss');
+  m.innerHTML = '<div class="boss-preview">'
+    + '<img class="bp-emblem" src="' + boss.emblem + '" alt="" onerror="this.src=\'assets/bosses/boss-unknown.svg\'">'
+    + '<div class="bp-name">' + boss.name + '</div>'
+    + '<div class="bp-title">' + boss.title + '</div>'
+    + '<div class="bp-stats">生命 ' + boss.hp + ' · 初始护甲 ' + (boss.startBlock || 0) + '</div>'
+    + '<div class="bp-core">' + (boss.core ? boss.core.name + '：' + boss.core.desc : '') + '</div>'
+    + '<button class="btn btn-primary comic-btn" id="bp-start">开始挑战</button>'
+    + '<button class="btn comic-btn" id="bp-cancel">取消</button></div>';
+  m.classList.remove('hidden');
+  m.querySelector('#bp-start').addEventListener('click', () => { m.classList.add('hidden'); beginBattle(node); });
+  m.querySelector('#bp-cancel').addEventListener('click', () => { m.classList.add('hidden'); });
 }
 
 // —— 英雄 ——
@@ -361,7 +382,9 @@ function renderArchive() {
   const list = document.getElementById('archive-list');
   const hands = CARDS.map(c => '<div class="archive-card comic-panel"><div class="ac-icon">' + c.icon + '</div><div class="ac-name">' + c.name + '</div><div class="ac-desc">' + c.desc + '</div></div>').join('');
   const skills = ALL_SKILL_CARDS.map(c => '<div class="archive-card comic-panel"><div class="ac-icon">' + c.icon + '</div><div class="ac-name">' + c.name + '</div><div class="ac-desc">' + c.desc + '</div></div>').join('');
-  list.innerHTML = '<div class="archive-sec">普通手牌 ' + CARDS.length + ' 张</div><div class="archive-grid">' + hands + '</div>'
+  const bosses = BOSSES.map(b => '<div class="archive-card boss"><img class="archive-emblem" src="' + b.emblem + '" alt="" onerror="this.src=\'assets/bosses/boss-unknown.svg\'"><div class="ac-name">' + b.name + '</div><div class="ac-desc">' + b.title + ' · ' + (b.chapter === 1 ? '可挑战' : '占位/未遭遇') + '</div></div>').join('');
+  list.innerHTML = '<div class="archive-sec">Boss 档案</div><div class="archive-grid">' + bosses + '</div>'
+    + '<div class="archive-sec">普通手牌 ' + CARDS.length + ' 张</div><div class="archive-grid">' + hands + '</div>'
     + '<div class="archive-sec">技能牌 ' + ALL_SKILL_CARDS.length + ' 张</div><div class="archive-grid">' + skills + '</div>';
 }
 
@@ -522,9 +545,10 @@ function onBattleEnd(win, S) {
   restockShop();
 
   if (node.type === 'boss' && Run.chapter >= 5) {
-    document.getElementById('result-big').textContent = '🏆';
-    document.getElementById('result-title').textContent = '通关！';
-    document.getElementById('result-text').textContent = '你走完了五章，获得 ' + gold + ' 金币。';
+    const boss = bossByChapter(Run.chapter);
+    document.getElementById('result-big').innerHTML = '<img class="result-emblem" src="' + boss.emblem + '" alt="">';
+    document.getElementById('result-title').textContent = '击破 ' + boss.name;
+    document.getElementById('result-text').textContent = boss.title + ' · 你走完了五章，获得 ' + gold + ' 金币。';
     document.getElementById('btn-restart').textContent = '返回大厅';
     UI.showScreen('result');
     clearRun();
@@ -532,9 +556,16 @@ function onBattleEnd(win, S) {
   }
 
   advanceNode();
-  document.getElementById('result-big').textContent = node.type === 'boss' ? '🏁' : '✅';
-  document.getElementById('result-title').textContent = node.type === 'boss' ? '章节完成' : '战斗胜利';
-  document.getElementById('result-text').textContent = '获得 ' + gold + ' 金币，商店已重新补货。';
+  if (node.type === 'boss') {
+    const boss = bossByChapter(Run.chapter);
+    document.getElementById('result-big').innerHTML = '<img class="result-emblem" src="' + boss.emblem + '" alt="">';
+    document.getElementById('result-title').textContent = '击破 ' + boss.name;
+    document.getElementById('result-text').textContent = boss.title + ' · 获得 ' + gold + ' 金币，商店已重新补货。';
+  } else {
+    document.getElementById('result-big').textContent = '✅';
+    document.getElementById('result-title').textContent = '战斗胜利';
+    document.getElementById('result-text').textContent = '获得 ' + gold + ' 金币，商店已重新补货。';
+  }
   document.getElementById('btn-restart').textContent = '继续';
   UI.showScreen('result');
 }

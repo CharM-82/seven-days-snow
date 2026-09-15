@@ -75,7 +75,7 @@ const ENEMIES = [
 // 第一季五章 Boss 配置（Boss-1 已接入，Boss-2~5 数据备用，机制待后续接入）
 const BOSSES = [
   {
-    id: 'boss1', chapter: 1, name: '物业经理', icon: '🕴️', hp: 70, startBlock: 6,
+    id: 'boss1', chapter: 1, name: '严阙', title: '封门执掌者', formerName: '物业经理', icon: 'assets/bosses/boss1-emblem.svg', emblem: 'assets/bosses/boss1-emblem.svg', accent: '#e95b47', secondary: '#f4a340', animation: 'seal', hp: 70, startBlock: 6,
     core: { name: '克扣门禁', desc: '玩家每打 1 张牌，Boss 获得 1 层克扣；Boss 攻击时每层 +1 伤害并清零' },
     attack: [{ kind: 'attack', value: 8 }, { kind: 'attack', value: 8 }, { kind: 'attack', value: 14 }],
     defense: { startBlock: 6, regen: 6, every: 3 },
@@ -83,7 +83,7 @@ const BOSSES = [
     antiSkill: { stack: 2, desc: '技能牌额外 +2 层克扣' }
   },
   {
-    id: 'boss2', chapter: 2, name: '区域主管', icon: '🧑‍💼', hp: 105, startBlock: 8,
+    id: 'boss2', chapter: 2, name: '廪主', title: '藏冬司库', formerName: '区域主管', icon: 'assets/bosses/boss2-emblem.svg', emblem: 'assets/bosses/boss2-emblem.svg', accent: '#b99646', secondary: '#66866a', animation: 'stack', hp: 105, startBlock: 8,
     core: { name: '配给限额', desc: '每回合第 3 张及之后的牌费用 +1' },
     attack: [{ kind: 'attack', value: 10 }, { kind: 'attack', value: 10 }, { kind: 'attack', value: 12, hits: 2 }],
     defense: { startBlock: 8, regen: 8, every: 2 },
@@ -91,7 +91,7 @@ const BOSSES = [
     antiSkill: { desc: '技能牌触发 Boss 清除自身易伤并 +3 护甲' }
   },
   {
-    id: 'boss3', chapter: 3, name: '安保队长', icon: '💂', hp: 140, startBlock: 10,
+    id: 'boss3', chapter: 3, name: '赤哨', title: '强制执行官', formerName: '安保队长', icon: 'assets/bosses/boss3-emblem.svg', emblem: 'assets/bosses/boss3-emblem.svg', accent: '#d93a4a', secondary: '#8a94a6', animation: 'impact', hp: 140, startBlock: 10,
     core: { name: '巡逻警戒', desc: '每 3 回合进入警戒；警戒期间玩家攻击伤害 -50%，Boss 首次受击后解除并反伤 4' },
     attack: [{ kind: 'attack', value: 12 }, { kind: 'attack', value: 12 }, { kind: 'attack', value: 18 }],
     defense: { startBlock: 10, regen: 5, every: 1 },
@@ -99,7 +99,7 @@ const BOSSES = [
     antiSkill: { desc: '玩家打技能牌时 Boss 下回合攻击 +1' }
   },
   {
-    id: 'boss4', chapter: 4, name: '核心高管', icon: '🧛', hp: 175, startBlock: 12,
+    id: 'boss4', chapter: 4, name: '白频', title: '静默播报者', formerName: '核心高管', icon: 'assets/bosses/boss4-emblem.svg', emblem: 'assets/bosses/boss4-emblem.svg', accent: '#69c9e8', secondary: '#8b7fb8', animation: 'frost', hp: 175, startBlock: 12,
     core: { name: '信息封锁', desc: '每回合开始随机 1 张手牌费用 +1；若玩家未出牌，Boss +6 护甲' },
     attack: [{ kind: 'attack', value: 14 }, { kind: 'attack', value: 14 }, { kind: 'attack', value: 16, hits: 2 }, { kind: 'attack', value: 22 }],
     defense: { startBlock: 12, regen: 12, every: 3 },
@@ -107,7 +107,7 @@ const BOSSES = [
     antiSkill: { desc: '技能牌使 Boss 恢复 3 HP' }
   },
   {
-    id: 'boss5', chapter: 5, name: '周鸿安', icon: '👔', hp: 210, startBlock: 14,
+    id: 'boss5', chapter: 5, name: '第七席', title: '终雪总管', formerName: '周鸿安', icon: 'assets/bosses/boss5-emblem.svg', emblem: 'assets/bosses/boss5-emblem.svg', accent: '#d4af37', secondary: '#6fc3df', animation: 'phase', hp: 210, startBlock: 14,
     core: { name: '白夜倒计时', desc: '第 6 回合起每回合结束造成 10 点不可护甲伤害，每回合 +5' },
     attack: [{ kind: 'attack', value: 16 }, { kind: 'attack', value: 16 }, { kind: 'attack', value: 24, hits: 2 }, { kind: 'attack', value: 24 }],
     defense: { startBlock: 14, regen: 14, every: 3 },
@@ -291,6 +291,15 @@ function validateData() {
   CLASSES.forEach(cl => cl.starterDeck.forEach(cid => {
     if (!handIds.has(cid)) errors.push('职业牌引用缺失: ' + cl.id + ' -> ' + cid);
   }));
+  const bossNames = new Set();
+  const bossTitles = new Set();
+  BOSSES.forEach(b => {
+    if (!b.name || !b.title || !b.emblem) errors.push('Boss 缺少显示字段: ' + b.id);
+    if (b.emblem && !b.emblem.endsWith('.svg')) errors.push('Boss 图标非 svg: ' + b.id);
+    if (bossNames.has(b.name)) errors.push('Boss 名称重复: ' + b.name);
+    if (bossTitles.has(b.title)) errors.push('Boss 称号重复: ' + b.title);
+    bossNames.add(b.name); bossTitles.add(b.title);
+  });
   if (errors.length) console.warn('[data-validate]', errors);
   return errors;
 }

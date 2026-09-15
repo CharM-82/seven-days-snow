@@ -596,3 +596,17 @@ html, body { background: var(--page-bg); }
 .setting-row .sr-desc { font-size: 11px; color: var(--paper-400); margin-top: 3px; }
 .empty-tip { text-align: center; color: var(--paper-400); font-size: 13px; padding: 24px 0; }
 html.reduced-motion *, html.reduced-motion *::before, html.reduced-motion *::after { animation-duration: .001s !important; transition-duration: .001s !important; }
+
+/* Boss 徽章与预览 */
+.boss-emblem, .enemy-emblem, .result-emblem, .archive-emblem { display: inline-block; object-fit: contain; }
+.boss-emblem { width: 34px; height: 34px; }
+.enemy-emblem { width: 48px; height: 48px; }
+.result-emblem { width: 64px; height: 64px; }
+.archive-emblem { width: 42px; height: 42px; }
+#modal-boss .boss-preview { text-align: center; padding: 6px 2px; }
+.bp-emblem { width: 76px; height: 76px; }
+.bp-name { margin-top: 8px; font-size: 24px; font-weight: 900; color: var(--paper-100); }
+.bp-title { margin-top: 2px; font-size: 13px; color: var(--orange-500); font-weight: 700; }
+.bp-stats { margin-top: 8px; font-size: 13px; color: var(--paper-100); }
+.bp-core { margin: 10px 0 12px; font-size: 12px; color: var(--paper-400); line-height: 1.5; }
+#bp-start, #bp-cancel { width: 100%; margin-top: 8px; }

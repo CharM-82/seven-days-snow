@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="t">
+  <title id="t">藏冬司库 廪主</title>
+  <path d="M34 34 L64 18 L94 34 L94 64 L64 80 L34 64 Z" fill="none" stroke="#b99646" stroke-width="6"/>
+  <rect x="38" y="46" width="52" height="16" rx="3" fill="#66866a" stroke="#0f1722" stroke-width="4"/>
+  <rect x="38" y="66" width="52" height="16" rx="3" fill="#66866a" stroke="#0f1722" stroke-width="4"/>
+  <rect x="38" y="86" width="52" height="16" rx="3" fill="#66866a" stroke="#0f1722" stroke-width="4"/>
+  <rect x="58" y="60" width="12" height="18" rx="2" fill="#b99646" stroke="#0f1722" stroke-width="3"/>
+  <path d="M28 40 Q64 30 100 40" fill="none" stroke="#f5f5f2" stroke-width="5" stroke-linecap="round"/>
+</svg>

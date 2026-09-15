@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="t">
+  <title id="t">未知 Boss</title>
+  <path d="M64 16 L108 40 L108 80 L64 112 L20 80 L20 40 Z" fill="none" stroke="#a9adb5" stroke-width="6"/>
+  <path d="M48 58 L64 74 L80 58" fill="none" stroke="#8792a8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="64" cy="58" r="5" fill="#8792a8"/>
+</svg>

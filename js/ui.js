@@ -108,7 +108,12 @@ const UI = (function () {
     $('#stat-mult').textContent = '✖ 倍数 ' + (Math.round(S.turnMult * 10) / 10);
     if (!busy) $('#score-mult').textContent = Math.round(S.turnMult * 10) / 10;
 
-    $('#enemy-icon').textContent = S.enemy.icon;
+    const eIcon = $('#enemy-icon');
+    if (S.enemy.icon && S.enemy.icon.endsWith('.svg')) {
+      eIcon.innerHTML = '<img class="enemy-emblem" src="' + S.enemy.icon + '" alt="" onerror="this.src=\'assets/bosses/boss-unknown.svg\'">';
+    } else {
+      eIcon.textContent = S.enemy.icon;
+    }
     $('#enemy-name').textContent = S.enemy.name;
     $('#enemy-hp').textContent = S.enemy.hp + '/' + S.enemy.maxHp;
     $('#enemy-hp-fill').style.width = Math.max(0, (S.enemy.hp / S.enemy.maxHp) * 100) + '%';

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="t">
+  <title id="t">静默播报者 白频</title>
+  <circle cx="64" cy="64" r="46" fill="none" stroke="#8b7fb8" stroke-width="6"/>
+  <path d="M42 48 L70 48 L88 58 L70 68 L42 68 Z" fill="#69c9e8" stroke="#eef6fb" stroke-width="4"/>
+  <path d="M34 64 Q26 52 34 40 M34 64 Q26 76 34 88 M26 64 Q14 50 26 34" fill="none" stroke="#69c9e8" stroke-width="4" stroke-linecap="round"/>
+  <path d="M100 30 Q110 36 100 42" fill="none" stroke="#eef6fb" stroke-width="4" stroke-linecap="round"/>
+</svg>

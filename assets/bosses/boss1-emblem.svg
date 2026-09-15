@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="t">
+  <title id="t">封门执掌者 严阙</title>
+  <rect x="20" y="12" width="88" height="104" rx="10" fill="#1b2230" stroke="#e95b47" stroke-width="6"/>
+  <rect x="30" y="22" width="68" height="84" rx="6" fill="none" stroke="#f4a340" stroke-width="4"/>
+  <circle cx="64" cy="62" r="15" fill="#f5f5f2" stroke="#e95b47" stroke-width="5"/>
+  <rect x="60" y="62" width="8" height="34" fill="#f5f5f2"/>
+  <rect x="56" y="78" width="16" height="5" rx="2" fill="#f5f5f2"/>
+  <path d="M12 28 L38 28 M12 28 L12 54 M116 28 L90 28 M116 28 L116 54" fill="none" stroke="#e95b47" stroke-width="5"/>
+  <path d="M20 98 L44 98 M84 98 L108 98" fill="none" stroke="#f4a340" stroke-width="4"/>
+</svg>

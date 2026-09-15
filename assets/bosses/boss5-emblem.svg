@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="t">
+  <title id="t">终雪总管 第七席</title>
+  <circle cx="64" cy="64" r="46" fill="#0f1722" stroke="#d4af37" stroke-width="6"/>
+  <g stroke="#6fc3df" stroke-width="5">
+    <path d="M64 22 L64 34 M94 40 L86 48 M104 64 L92 64 M94 88 L86 80 M64 106 L64 94 M34 88 L42 80 M24 64 L36 64 M34 40 L42 48"/>
+  </g>
+  <path d="M52 50 L76 50 L76 78 L64 92 L52 78 Z" fill="#5b4b8a" stroke="#d4af37" stroke-width="4"/>
+  <path d="M40 40 Q64 26 88 40" fill="none" stroke="#eef6fb" stroke-width="5" stroke-linecap="round"/>
+</svg>
