@@ -1,1 +1,168 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>已停用</title></head><body style="background:#0c1220;color:#c9d6f2;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><h1>公开链接已停用</h1><p>请使用带密码的实时链接访问。</p></div></body></html>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>七日回雪 · 卡牌原型</title>
+  <link rel="stylesheet" href="style.css?v=20260915" />
+</head>
+<body>
+  <div id="app">
+
+    <section id="screen-menu" class="screen active">
+      <div class="menu-inner">
+        <div class="logo">七日回雪</div>
+        <div class="subtitle">卡牌打怪 · 原型</div>
+        <div class="rule-line">伤害 = 基础伤害 × 倍数</div>
+        <button id="btn-start" class="btn btn-primary">开始闯关</button>
+        <div class="menu-tip">按住卡牌 → 拖到中间战斗区 → 松手出牌</div>
+      </div>
+    </section>
+
+    <section id="screen-run" class="screen">
+      <div id="topbar">
+        <div class="node-pill" id="node-label">第 1 战</div>
+        <div class="mult-pill" id="stat-mult">✖ 倍数 1.0</div>
+      </div>
+
+      <div id="enemy-area">
+        <div class="enemy-card">
+          <div class="enemy-icon" id="enemy-icon">👊</div>
+          <div class="enemy-name" id="enemy-name">物业打手</div>
+          <div class="bar"><div class="bar-fill hp-fill" id="enemy-hp-fill"></div></div>
+          <div class="enemy-sub">
+            <span id="enemy-hp">20/20</span>
+            <span id="enemy-block">🛡 0</span>
+            <span id="enemy-vuln" class="badge hidden">易伤</span>
+            <span id="enemy-stacks" class="badge stack hidden">克扣 0</span>
+          </div>
+          <div class="intent" id="enemy-intent">攻击 6</div>
+        </div>
+      </div>
+
+      <div id="combat-zone">
+        <div id="scoreboard">
+          <div class="score-total-cell"><span class="score-label total">总伤害</span><span class="score-num big" id="score-total">0</span></div>
+          <div class="score-row">
+            <div class="score-cell damage"><span class="score-label">伤害</span><span class="score-num" id="score-dmg">0</span><span id="score-vortex" class="vortex hidden"></span></div>
+            <div class="score-op">×</div>
+            <div class="score-cell mult"><span class="score-label">倍数</span><span class="score-num" id="score-mult">1</span></div>
+          </div>
+        </div>
+        <div id="zone-card" class="hidden"></div>
+        <div class="drop-hint">拖到这里出牌</div>
+      </div>
+
+      <div id="equip-row">
+        <div class="equip-slot" id="equip-0"></div>
+        <div class="equip-slot" id="equip-1"></div>
+        <div class="equip-slot" id="equip-2"></div>
+      </div>
+
+      <div id="transition-gap"></div>
+
+      <div id="hand-area">
+        <div class="hand" id="hand"></div>
+      </div>
+
+      <div id="player-bars">
+        <div class="pbar">
+          <div class="pbar-label">生命</div>
+          <div class="pbar-track"><div class="pbar-fill hp" id="hp-fill"></div><span class="pbar-text" id="bar-hp">60/60</span></div>
+        </div>
+        <div class="pbar">
+          <div class="pbar-label">护甲</div>
+          <div class="pbar-track"><div class="pbar-fill block" id="block-fill"></div><span class="pbar-text" id="bar-block">0</span></div>
+        </div>
+        <div class="pbar">
+          <div class="pbar-label">行动力</div>
+          <div class="pbar-track"><div class="pbar-fill energy" id="energy-fill"></div><span class="pbar-text" id="bar-energy">3/3</span></div>
+        </div>
+      </div>
+
+      <div id="bottom-bar">
+        <div class="pile"><span id="draw-count">牌堆 0</span><span id="discard-count">弃牌 0</span></div>
+        <button id="btn-end-turn" class="btn btn-end">结束回合</button>
+      </div>
+
+      <div id="fx-layer"></div>
+      <div id="screen-fx" class="hidden"></div>
+      <div id="log-list"></div>
+      <div id="boss-death" class="hidden"><div class="boss-death-text">BOSS 击破！</div></div>
+      <div id="drag-ghost" class="hidden"></div>
+    </section>
+
+    <section id="screen-result" class="screen">
+      <div class="menu-inner">
+        <div id="result-big">🏆</div>
+        <div id="result-title">胜利</div>
+        <div id="result-text"></div>
+        <button id="btn-restart" class="btn btn-primary">再来一局</button>
+      </div>
+    </section>
+
+    
+    <section id="screen-lobby" class="screen">
+      <div class="lobby-inner">
+        <div class="logo">七日回雪</div>
+        <div class="lobby-row">💰 金币 <span class="gold" id="lobby-gold">0</span></div>
+        <div class="lobby-row" id="lobby-class">职业：未选择</div>
+        <button class="btn btn-primary" id="btn-choose-class">选择职业</button>
+        <button class="btn" id="btn-levels">关卡选择</button>
+        <button class="btn" id="btn-shop">商店</button>
+        <button class="btn" id="btn-back-menu">返回菜单</button>
+      </div>
+    </section>
+
+    <section id="screen-classes" class="screen">
+      <div class="lobby-inner">
+        <div class="logo">选择职业</div>
+        <div id="class-list" class="card-grid"></div>
+        <button class="btn" id="btn-classes-back">返回大厅</button>
+      </div>
+    </section>
+
+    <section id="screen-levels" class="screen">
+      <div class="lobby-inner">
+        <div class="logo">关卡选择</div>
+        <div id="level-list" class="card-grid"></div>
+        <button class="btn" id="btn-levels-back">返回大厅</button>
+      </div>
+    </section>
+
+    <section id="screen-shop" class="screen">
+      <div class="lobby-inner">
+        <div class="logo">商店</div>
+        <div class="lobby-row">💰 金币 <span class="gold" id="shop-gold">0</span></div>
+        <div id="shop-packs"></div>
+        <div id="shop-slots" class="card-grid"></div>
+        <button class="btn" id="btn-shop-back">返回大厅</button>
+      </div>
+    </section>
+
+<div id="modal-root">
+      <div class="modal hidden" id="modal-reward"></div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
