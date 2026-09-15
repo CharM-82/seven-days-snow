@@ -67,9 +67,35 @@ const EQUIPMENTS = [
 ];
 
 const ENEMIES = [
-  { id: 'looter', name: '抢购者', icon: '😤', hp: 16, intents: [{ kind: 'attack', value: 6 }, { kind: 'attack', value: 6 }, { kind: 'block', value: 4 }] },
-  { id: 'hoarder', name: '囤积者', icon: '😒', hp: 24, intents: [{ kind: 'attack', value: 8 }, { kind: 'attack', value: 5 }, { kind: 'block', value: 6 }] },
-  { id: 'thug', name: '物业打手', icon: '👊', hp: 20, intents: [{ kind: 'attackVuln', value: 6 }, { kind: 'attack', value: 6 }, { kind: 'block', value: 5 }] }
+  // 第一章 封锁小区
+  { id: 'c1-looter', chapter: 1, name: '抢购者', icon: '😤', hp: 16, intents: [{ kind: 'attack', value: 6 }, { kind: 'attack', value: 6 }, { kind: 'block', value: 4 }] },
+  { id: 'c1-gate', chapter: 1, name: '封栏员', icon: '🚧', hp: 20, intents: [{ kind: 'block', value: 5 }, { kind: 'attack', value: 7 }, { kind: 'attack', value: 6 }] },
+  { id: 'c1-bill', chapter: 1, name: '催缴员', icon: '🧾', hp: 18, intents: [{ kind: 'attackVuln', value: 6 }, { kind: 'attack', value: 6 }, { kind: 'block', value: 4 }] },
+  { id: 'elite1', chapter: 1, elite: true, name: '巡门组长', icon: '🛡️', hp: 30, intents: [{ kind: 'block', value: 6 }, { kind: 'attack', value: 8 }, { kind: 'attackVuln', value: 7 }] },
+
+  // 第二章 冻结仓区
+  { id: 'c2-hauler', chapter: 2, name: '搬运傀', icon: '📦', hp: 24, intents: [{ kind: 'attack', value: 8 }, { kind: 'block', value: 6 }, { kind: 'attack', value: 7 }] },
+  { id: 'c2-lock', chapter: 2, name: '锁仓员', icon: '🔒', hp: 28, intents: [{ kind: 'block', value: 8 }, { kind: 'block', value: 6 }, { kind: 'attack', value: 12 }] },
+  { id: 'c2-count', chapter: 2, name: '清点者', icon: '📋', hp: 22, intents: [{ kind: 'attack', value: 7 }, { kind: 'block', value: 6 }, { kind: 'attackVuln', value: 7 }] },
+  { id: 'elite2', chapter: 2, elite: true, name: '冻库监守', icon: '🧊', hp: 40, intents: [{ kind: 'block', value: 10 }, { kind: 'attack', value: 10 }, { kind: 'block', value: 10 }] },
+
+  // 第三章 强制执行区
+  { id: 'c3-red', chapter: 3, name: '红袖执行员', icon: '🟥', hp: 26, intents: [{ kind: 'attack', value: 9 }, { kind: 'attack', value: 9 }, { kind: 'block', value: 5 }] },
+  { id: 'c3-break', chapter: 3, name: '破门手', icon: '🔨', hp: 24, intents: [{ kind: 'attackVuln', value: 8 }, { kind: 'attack', value: 8 }, { kind: 'block', value: 5 }] },
+  { id: 'c3-chase', chapter: 3, name: '追缴者', icon: '🏃', hp: 28, intents: [{ kind: 'attack', value: 10 }, { kind: 'attack', value: 6 }, { kind: 'block', value: 6 }] },
+  { id: 'elite3', chapter: 3, elite: true, name: '重装督办', icon: '🛡️', hp: 42, intents: [{ kind: 'attack', value: 12 }, { kind: 'block', value: 8 }, { kind: 'attack', value: 14 }] },
+
+  // 第四章 静默广播塔
+  { id: 'c4-noise', chapter: 4, name: '噪频员', icon: '📡', hp: 26, intents: [{ kind: 'attackVuln', value: 7 }, { kind: 'block', value: 6 }, { kind: 'attack', value: 8 }] },
+  { id: 'c4-cut', chapter: 4, name: '断讯者', icon: '📵', hp: 24, intents: [{ kind: 'attack', value: 8 }, { kind: 'block', value: 8 }, { kind: 'attack', value: 7 }] },
+  { id: 'c4-cold', chapter: 4, name: '冷播机', icon: '❄️', hp: 28, intents: [{ kind: 'attack', value: 9 }, { kind: 'block', value: 7 }, { kind: 'attackVuln', value: 8 }] },
+  { id: 'elite4', chapter: 4, elite: true, name: '白噪中继', icon: '📶', hp: 40, intents: [{ kind: 'attack', value: 10 }, { kind: 'block', value: 10 }, { kind: 'attackVuln', value: 9 }] },
+
+  // 第五章 终雪中枢
+  { id: 'c5-copy', chapter: 5, name: '合约抄录体', icon: '📑', hp: 30, intents: [{ kind: 'attack', value: 11 }, { kind: 'block', value: 8 }, { kind: 'attack', value: 10 }] },
+  { id: 'c5-guard', chapter: 5, name: '刻度守卫', icon: '⏱️', hp: 32, intents: [{ kind: 'block', value: 10 }, { kind: 'attack', value: 13 }, { kind: 'attack', value: 10 }] },
+  { id: 'c5-audit', chapter: 5, name: '终雪稽核员', icon: '🧾', hp: 34, intents: [{ kind: 'attackVuln', value: 10 }, { kind: 'attack', value: 12 }, { kind: 'block', value: 8 }] },
+  { id: 'elite5', chapter: 5, elite: true, name: '第六席代理', icon: '💠', hp: 46, intents: [{ kind: 'attack', value: 14 }, { kind: 'block', value: 12 }, { kind: 'attack', value: 16 }] }
 ];
 
 // 第一季五章 Boss 配置（Boss-1 已接入，Boss-2~5 数据备用，机制待后续接入）
@@ -169,41 +195,41 @@ const BOSS_DECKS = {
 
 const CHAPTERS = [
   { id: 1, name: '第一章 · 七日预警', nodes: [
-    { type: 'battle', enemyId: 'looter', label: '外围' },
-    { type: 'battle', enemyId: 'hoarder', label: '仓储区' },
-    { type: 'elite', enemyId: 'thug', label: '物业大堂' },
+    { type: 'battle', enemyId: 'c1-looter', label: 'c1-looter' },
+    { type: 'battle', enemyId: 'c1-gate', label: 'c1-gate' },
+    { type: 'elite', enemyId: 'elite1', label: 'elite1' },
     { type: 'shop', label: '补给商店' },
     { type: 'rest', label: '临时休整' },
     { type: 'boss', enemyId: 'boss', label: '最终对峙' }
   ]},
   { id: 2, name: '第二章 · 区域主管', nodes: [
-    { type: 'battle', enemyId: 'looter', label: '外围' },
-    { type: 'battle', enemyId: 'hoarder', label: '仓储区' },
-    { type: 'elite', enemyId: 'thug', label: '物业大堂' },
+    { type: 'battle', enemyId: 'c2-hauler', label: 'c2-hauler' },
+    { type: 'battle', enemyId: 'c2-lock', label: 'c2-lock' },
+    { type: 'elite', enemyId: 'elite2', label: 'elite2' },
     { type: 'shop', label: '补给商店' },
     { type: 'rest', label: '临时休整' },
     { type: 'boss', enemyId: 'boss', label: '区域主管' }
   ]},
   { id: 3, name: '第三章 · 安保队长', nodes: [
-    { type: 'battle', enemyId: 'looter', label: '外围' },
-    { type: 'battle', enemyId: 'hoarder', label: '仓储区' },
-    { type: 'elite', enemyId: 'thug', label: '物业大堂' },
+    { type: 'battle', enemyId: 'c3-red', label: 'c3-red' },
+    { type: 'battle', enemyId: 'c3-break', label: 'c3-break' },
+    { type: 'elite', enemyId: 'elite3', label: 'elite3' },
     { type: 'shop', label: '补给商店' },
     { type: 'rest', label: '临时休整' },
     { type: 'boss', enemyId: 'boss', label: '安保队长' }
   ]},
   { id: 4, name: '第四章 · 核心高管', nodes: [
-    { type: 'battle', enemyId: 'looter', label: '外围' },
-    { type: 'battle', enemyId: 'hoarder', label: '仓储区' },
-    { type: 'elite', enemyId: 'thug', label: '物业大堂' },
+    { type: 'battle', enemyId: 'c4-noise', label: 'c4-noise' },
+    { type: 'battle', enemyId: 'c4-cut', label: 'c4-cut' },
+    { type: 'elite', enemyId: 'elite4', label: 'elite4' },
     { type: 'shop', label: '补给商店' },
     { type: 'rest', label: '临时休整' },
     { type: 'boss', enemyId: 'boss', label: '核心高管' }
   ]},
   { id: 5, name: '第五章 · 白夜', nodes: [
-    { type: 'battle', enemyId: 'looter', label: '外围' },
-    { type: 'battle', enemyId: 'hoarder', label: '仓储区' },
-    { type: 'elite', enemyId: 'thug', label: '物业大堂' },
+    { type: 'battle', enemyId: 'c5-copy', label: 'c5-copy' },
+    { type: 'battle', enemyId: 'c5-guard', label: 'c5-guard' },
+    { type: 'elite', enemyId: 'elite5', label: 'elite5' },
     { type: 'shop', label: '补给商店' },
     { type: 'rest', label: '临时休整' },
     { type: 'boss', enemyId: 'boss', label: '周鸿安' }
@@ -254,10 +280,10 @@ const SKILL_CARDS = [
 const ALL_SKILL_CARDS = EQUIPMENTS.concat(SKILL_CARDS);
 
 const SHOP = {
-  startGold: 100, winGold: 50, bossGold: 100,
-  normalPackCost: 50, premiumPackCost: 100, skillPackCost: 80, shopCardCost: 60,
+  startGold: 30, winGold: 12, eliteGold: 22, bossGold: 32,
+  normalPackCost: 18, premiumPackCost: 36, skillPackCost: 30, shopCardCost: 30,
   normalPackSize: 6, premiumPackSize: 8, skillPackSize: 6,
-  resetBaseCost: 30, resetCostStep: 30
+  resetBaseCost: 8, resetCostStep: 6
 };
 
 function classById(id) { return CLASSES.find(c => c.id === id); }

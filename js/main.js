@@ -191,9 +191,9 @@ function renderPlay() {
     let icon, name, meta, reward;
     if (n.type === 'battle' || n.type === 'elite') {
       icon = enemyById(n.enemyId).icon;
-      name = n.label;
-      meta = n.type === 'elite' ? '精英 · ' + enemyById(n.enemyId).name : enemyById(n.enemyId).name;
-      reward = '胜利 +' + (n.type === 'elite' ? 70 : SHOP.winGold) + ' 金币';
+      name = enemyById(n.enemyId).name;
+      meta = n.type === 'elite' ? '精英' : '普通';
+      reward = '胜利 +' + (n.type === 'elite' ? SHOP.eliteGold : SHOP.winGold) + ' 金币';
     } else if (n.type === 'shop') {
       icon = '🛒'; name = n.label; meta = '购买卡牌与技能'; reward = '补给';
     } else if (n.type === 'rest') {
@@ -506,7 +506,13 @@ function resetShop() {
 
 function addSkill(id) {
   const slot = Run.equip.indexOf(null);
-  if (slot >= 0) Run.equip[slot] = id;
+  if (slot >= 0) { Run.equip[slot] = id; return; }
+  const equips = Run.equip.map(eid => skillById(eid)).filter(Boolean);
+  UI.showPackModal('技能槽已满，选择要替换的技能', equips, 1, idxs => {
+    Run.equip[idxs[0]] = id;
+    saveRun();
+    renderShop();
+  }, () => {});
 }
 
 // —— 战斗 ——
@@ -534,7 +540,7 @@ function onBattleEnd(win, S) {
   }
 
   const node = Run.route[Run.nodeIndex];
-  const gold = node.type === 'boss' ? SHOP.bossGold : node.type === 'elite' ? 70 : SHOP.winGold;
+  const gold = node.type === 'boss' ? SHOP.bossGold : node.type === 'elite' ? SHOP.eliteGold : SHOP.winGold;
   Run.gold += gold;
   addStat('battlesWon', 1);
   if (Run.quests) {
@@ -546,28 +552,37 @@ function onBattleEnd(win, S) {
 
   if (node.type === 'boss' && Run.chapter >= 5) {
     const boss = bossByChapter(Run.chapter);
-    document.getElementById('result-big').innerHTML = '<img class="result-emblem" src="' + boss.emblem + '" alt="">';
-    document.getElementById('result-title').textContent = '击破 ' + boss.name;
-    document.getElementById('result-text').textContent = boss.title + ' · 你走完了五章，获得 ' + gold + ' 金币。';
-    document.getElementById('btn-restart').textContent = '返回大厅';
-    UI.showScreen('result');
-    clearRun();
+    UI.showBossDeath(() => {
+      document.getElementById('result-big').innerHTML = '<img class="result-emblem" src="' + boss.emblem + '" alt="">';
+      document.getElementById('result-title').textContent = '击破 ' + boss.name;
+      document.getElementById('result-text').textContent = boss.title + ' · 你走完了五章，获得 ' + gold + ' 金币。';
+      document.getElementById('btn-restart').textContent = '返回大厅';
+      UI.showScreen('result');
+      clearRun();
+    }, boss);
     return;
   }
 
   advanceNode();
   if (node.type === 'boss') {
     const boss = bossByChapter(Run.chapter);
-    document.getElementById('result-big').innerHTML = '<img class="result-emblem" src="' + boss.emblem + '" alt="">';
-    document.getElementById('result-title').textContent = '击破 ' + boss.name;
-    document.getElementById('result-text').textContent = boss.title + ' · 获得 ' + gold + ' 金币，商店已重新补货。';
+    UI.showBossDeath(() => {
+      document.getElementById('result-big').innerHTML = '<img class="result-emblem" src="' + boss.emblem + '" alt="">';
+      document.getElementById('result-title').textContent = '击破 ' + boss.name;
+      document.getElementById('result-text').textContent = boss.title + ' · 获得 ' + gold + ' 金币，商店已重新补货。';
+      document.getElementById('btn-restart').textContent = '继续';
+      UI.showScreen('result');
+    }, boss);
   } else {
-    document.getElementById('result-big').textContent = '✅';
-    document.getElementById('result-title').textContent = '战斗胜利';
-    document.getElementById('result-text').textContent = '获得 ' + gold + ' 金币，商店已重新补货。';
+    const enemy = enemyById(node.enemyId);
+    UI.showEnemyDeath(() => {
+      document.getElementById('result-big').textContent = '✅';
+      document.getElementById('result-title').textContent = '战斗胜利';
+      document.getElementById('result-text').textContent = '获得 ' + gold + ' 金币，商店已重新补货。';
+      document.getElementById('btn-restart').textContent = '继续';
+      UI.showScreen('result');
+    }, enemy);
   }
-  document.getElementById('btn-restart').textContent = '继续';
-  UI.showScreen('result');
 }
 
 document.addEventListener('DOMContentLoaded', init);

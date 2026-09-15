@@ -528,10 +528,19 @@ const UI = (function () {
     modal.querySelector('#reward-skip').addEventListener('click', () => { modal.classList.add('hidden'); onSkip(); });
   }
 
-  function showBossDeath(onDone) {
+  function showBossDeath(onDone, boss) {
     const el = $('#boss-death');
+    const txt = el.querySelector('.boss-death-text');
+    if (txt) txt.textContent = boss ? ('BOSS 击破 · ' + boss.name + ' · ' + boss.title) : 'BOSS 击破！';
     el.classList.remove('hidden');
-    setTimeout(() => { el.classList.add('hidden'); if (onDone) onDone(); }, 1000);
+    setTimeout(() => { el.classList.add('hidden'); if (onDone) onDone(); }, 1400);
+  }
+  function showEnemyDeath(onDone, enemy) {
+    const el = $('#boss-death');
+    const txt = el.querySelector('.boss-death-text');
+    if (txt) txt.textContent = enemy ? ('击破 ' + enemy.name) : '击破';
+    el.classList.remove('hidden');
+    setTimeout(() => { el.classList.add('hidden'); if (onDone) onDone(); }, 650);
   }
 
   function shakeTurnEnd() {
@@ -547,7 +556,7 @@ const UI = (function () {
 
   return {
     showScreen, renderCombat, resetTurn, pushLog, initInteraction, isBusy,
-    showReward, showBossDeath, showResult, showPackModal, shakeTurnEnd
+    showReward, showBossDeath, showEnemyDeath, showResult, showPackModal, shakeTurnEnd
   };
 })();
 
