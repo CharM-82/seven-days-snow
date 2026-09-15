@@ -12,13 +12,79 @@
 <body>
   <div id="app">
 
-    <section id="screen-menu" class="screen active">
-      <div class="menu-inner">
-        <div class="logo">七日回雪</div>
-        <div class="subtitle">卡牌打怪 · 原型</div>
-        <div class="rule-line">伤害 = 基础伤害 × 倍数</div>
-        <button id="btn-start" class="btn btn-primary">开始闯关</button>
-        <div class="menu-tip">按住卡牌 → 拖到中间战斗区 → 松手出牌</div>
+    <header id="shell-topbar">
+      <div class="shell-logo">七日回雪</div>
+      <div class="shell-gold" id="shell-gold" aria-label="金币">💰 100</div>
+    </header>
+
+    <section id="screen-home" class="screen active outer">
+      <div class="page-scroll">
+        <div class="home-stage">
+          <div class="hero-showcase comic-halftone">
+            <div class="hero-emoji" id="home-hero-emoji">🦸</div>
+            <div class="hero-name" id="home-hero-name">未选择英雄</div>
+            <div class="hero-sub" id="home-hero-sub">选择一位英雄，开始七日预警</div>
+          </div>
+          <button id="btn-home-primary" class="btn btn-primary comic-btn">选择英雄</button>
+        </div>
+
+        <div class="home-side">
+          <div class="chapter-card comic-panel">
+            <div class="chapter-kicker">第一章 · 七日预警</div>
+            <div class="chapter-name">最终对峙</div>
+            <div class="chapter-desc">击败物业经理，守住临雪市</div>
+            <button id="btn-home-play" class="btn comic-btn">进入章节</button>
+          </div>
+          <div class="rule-card comic-panel">
+            <div class="rule-title">核心规则</div>
+            <div class="rule-line">伤害 = 基础伤害 × 倍数</div>
+            <div class="rule-line small">拖卡到战斗区出牌</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-play" class="screen outer">
+      <div class="page-scroll">
+        <div class="page-head">
+          <h2>游戏 · 章节</h2>
+          <p>选择关卡进入战局</p>
+        </div>
+        <div id="play-list" class="mode-list"></div>
+      </div>
+    </section>
+
+    <section id="screen-heroes" class="screen outer">
+      <div class="page-scroll">
+        <div class="page-head">
+          <h2>英雄</h2>
+          <p>选择出战英雄</p>
+        </div>
+        <div id="hero-list" class="hero-grid"></div>
+        <div id="hero-detail" class="hero-detail"></div>
+      </div>
+    </section>
+
+    <section id="screen-shop" class="screen outer">
+      <div class="page-scroll">
+        <div class="page-head">
+          <h2>商城</h2>
+          <p>用金币购买手卡包与技能卡</p>
+        </div>
+        <div class="shop-gold-row">💰 金币 <span class="gold" id="shop-gold">0</span></div>
+        <div id="shop-packs"></div>
+        <div id="shop-slots" class="card-grid"></div>
+      </div>
+    </section>
+
+    <section id="screen-coming" class="screen outer">
+      <div class="page-scroll">
+        <div class="coming-inner comic-panel">
+          <div class="coming-ico">🚧</div>
+          <h2 id="coming-title">开发中</h2>
+          <p id="coming-desc">该模块将在后续版本开放</p>
+          <button id="btn-coming-back" class="btn btn-primary comic-btn">返回大厅</button>
+        </div>
       </div>
     </section>
 
@@ -96,54 +162,38 @@
     </section>
 
     <section id="screen-result" class="screen">
-      <div class="menu-inner">
+      <div class="result-inner comic-panel">
         <div id="result-big">🏆</div>
         <div id="result-title">胜利</div>
         <div id="result-text"></div>
-        <button id="btn-restart" class="btn btn-primary">再来一局</button>
+        <button id="btn-restart" class="btn btn-primary comic-btn">再来一局</button>
       </div>
     </section>
 
-    
-    <section id="screen-lobby" class="screen">
-      <div class="lobby-inner">
-        <div class="logo">七日回雪</div>
-        <div class="lobby-row">💰 金币 <span class="gold" id="lobby-gold">0</span></div>
-        <div class="lobby-row" id="lobby-class">职业：未选择</div>
-        <button class="btn btn-primary" id="btn-choose-class">选择职业</button>
-        <button class="btn" id="btn-levels">关卡选择</button>
-        <button class="btn" id="btn-shop">商店</button>
-        <button class="btn" id="btn-back-menu">返回菜单</button>
-      </div>
-    </section>
+    <nav id="shell-nav" aria-label="主导航">
+      <button class="nav-tab active" data-screen="home" aria-label="大厅"><span class="nav-ico">🏠</span><span class="nav-label">大厅</span></button>
+      <button class="nav-tab" data-screen="play" aria-label="游戏"><span class="nav-ico">🎮</span><span class="nav-label">游戏</span></button>
+      <button class="nav-tab" data-screen="heroes" aria-label="英雄"><span class="nav-ico">🦸</span><span class="nav-label">英雄</span></button>
+      <button class="nav-tab" data-screen="shop" aria-label="商城"><span class="nav-ico">🛒</span><span class="nav-label">商城</span></button>
+      <button class="nav-tab" id="nav-more" aria-label="更多"><span class="nav-ico">☰</span><span class="nav-label">更多</span></button>
+    </nav>
 
-    <section id="screen-classes" class="screen">
-      <div class="lobby-inner">
-        <div class="logo">选择职业</div>
-        <div id="class-list" class="card-grid"></div>
-        <button class="btn" id="btn-classes-back">返回大厅</button>
+    <div id="more-drawer" class="hidden">
+      <div class="more-scrim"></div>
+      <div class="more-panel comic-panel">
+        <div class="more-title">更多模块</div>
+        <div class="more-list">
+          <button class="more-item" data-coming="牌组">🃏 牌组</button>
+          <button class="more-item" data-coming="任务">📋 任务</button>
+          <button class="more-item" data-coming="生涯">🏅 生涯</button>
+          <button class="more-item" data-coming="社交">👥 社交</button>
+          <button class="more-item" data-coming="设置">⚙️ 设置</button>
+        </div>
+        <button id="btn-more-close" class="btn comic-btn">关闭</button>
       </div>
-    </section>
+    </div>
 
-    <section id="screen-levels" class="screen">
-      <div class="lobby-inner">
-        <div class="logo">关卡选择</div>
-        <div id="level-list" class="card-grid"></div>
-        <button class="btn" id="btn-levels-back">返回大厅</button>
-      </div>
-    </section>
-
-    <section id="screen-shop" class="screen">
-      <div class="lobby-inner">
-        <div class="logo">商店</div>
-        <div class="lobby-row">💰 金币 <span class="gold" id="shop-gold">0</span></div>
-        <div id="shop-packs"></div>
-        <div id="shop-slots" class="card-grid"></div>
-        <button class="btn" id="btn-shop-back">返回大厅</button>
-      </div>
-    </section>
-
-<div id="modal-root">
+    <div id="modal-root">
       <div class="modal hidden" id="modal-reward"></div>
     </div>
   </div>
@@ -154,16 +204,3 @@
   <script src="js/main.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-

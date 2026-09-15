@@ -1,4 +1,4 @@
-// 《七日回雪》v5 大厅/商店/关卡选择 · 主流程
+// 《七日回雪》v7 漫画风外围 UI · 主流程
 'use strict';
 
 let Run = {
@@ -24,27 +24,70 @@ function sample(arr, n) { return shuffle(arr).slice(0, n); }
 function init() {
   bind();
   UI.initInteraction();
-  showMenu();
+  restockShop();
+  renderHome();
+  navTo('home');
 }
 
+function setShell(visible) {
+  document.getElementById('app').classList.toggle('in-battle', !visible);
+}
+
+function updateShellGold() {
+  const el = document.getElementById('shell-gold');
+  if (el) el.textContent = '💰 ' + Run.gold;
+}
+
+function navTo(screen) {
+  setShell(true);
+  UI.showScreen(screen);
+  document.querySelectorAll('.nav-tab[data-screen]').forEach(t => t.classList.toggle('active', t.dataset.screen === screen));
+  document.getElementById('nav-more').classList.remove('active');
+  updateShellGold();
+}
+
+function goHome() { renderHome(); navTo('home'); }
+function showPlay() { if (!Run.classId) { showHeroes(); return; } renderPlay(); navTo('play'); }
+function showHeroes() { renderHeroes(); navTo('heroes'); }
+function showShop() { if (!Run.classId) { showHeroes(); return; } renderShop(); navTo('shop'); }
+
 function bind() {
-  document.getElementById('btn-start').addEventListener('click', goLobby);
-  document.getElementById('btn-choose-class').addEventListener('click', showClasses);
-  document.getElementById('btn-levels').addEventListener('click', showLevels);
-  document.getElementById('btn-shop').addEventListener('click', showShop);
-  document.getElementById('btn-back-menu').addEventListener('click', showMenu);
-  document.getElementById('btn-classes-back').addEventListener('click', goLobby);
-  document.getElementById('btn-levels-back').addEventListener('click', goLobby);
-  document.getElementById('btn-shop-back').addEventListener('click', goLobby);
-  document.getElementById('btn-restart').addEventListener('click', goLobby);
+  document.querySelectorAll('.nav-tab[data-screen]').forEach(tab => tab.addEventListener('click', () => {
+    const s = tab.dataset.screen;
+    if (s === 'home') goHome();
+    else if (s === 'play') showPlay();
+    else if (s === 'heroes') showHeroes();
+    else if (s === 'shop') showShop();
+  }));
+
+  document.getElementById('nav-more').addEventListener('click', () => {
+    document.getElementById('more-drawer').classList.remove('hidden');
+  });
+  document.getElementById('btn-more-close').addEventListener('click', () => {
+    document.getElementById('more-drawer').classList.add('hidden');
+  });
+  document.querySelector('.more-scrim').addEventListener('click', () => {
+    document.getElementById('more-drawer').classList.add('hidden');
+  });
+  document.querySelectorAll('.more-item').forEach(btn => btn.addEventListener('click', () => {
+    document.getElementById('more-drawer').classList.add('hidden');
+    showComingSoon(btn.dataset.coming);
+  }));
+
+  document.getElementById('btn-home-primary').addEventListener('click', () => {
+    if (Run.classId) showPlay();
+    else showHeroes();
+  });
+  document.getElementById('btn-home-play').addEventListener('click', showPlay);
+  document.getElementById('btn-coming-back').addEventListener('click', goHome);
+
+  document.getElementById('btn-restart').addEventListener('click', goHome);
   document.getElementById('btn-end-turn').addEventListener('click', () => {
     if (UI.isBusy()) return;
     UI.shakeTurnEnd();
     Combat.endTurn();
   });
 }
-
-function showMenu() { UI.showScreen('menu'); }
 
 function restockShop() {
   Run.shop = {
@@ -63,47 +106,88 @@ function newRun(classId) {
   restockShop();
 }
 
-function goLobby() {
-  if (!Run.classId) { showClasses(); return; }
-  renderLobby();
-  UI.showScreen('lobby');
-}
-
-function renderLobby() {
-  document.getElementById('lobby-gold').textContent = Run.gold;
+// —— 大厅 ——
+function renderHome() {
   const cl = Run.classId ? classById(Run.classId) : null;
-  document.getElementById('lobby-class').textContent = cl
-    ? ('职业：' + cl.name + (cl.passive ? '（' + cl.passive.name + '）' : ''))
-    : '职业：未选择';
+  document.getElementById('home-hero-emoji').textContent = cl ? cl.icon : '🦸';
+  document.getElementById('home-hero-name').textContent = cl ? cl.name : '未选择英雄';
+  document.getElementById('home-hero-sub').textContent = cl
+    ? (cl.desc + (cl.passive ? ' · ' + cl.passive.name : ''))
+    : '选择一位英雄，开始七日预警';
+  document.getElementById('btn-home-primary').textContent = cl ? '开始游戏' : '选择英雄';
+  updateShellGold();
 }
 
-function showClasses() {
-  const list = document.getElementById('class-list');
-  list.innerHTML = CLASSES.map(c =>
-    '<div class="class-card" data-id="' + c.id + '"><div class="cc-icon">' + c.icon + '</div><div class="cc-name">' + c.name + '</div><div class="cc-desc">' + c.desc + '</div></div>'
-  ).join('');
-  list.querySelectorAll('.class-card').forEach(el => el.addEventListener('click', () => {
-    newRun(el.dataset.id);
-    goLobby();
-  }));
-  UI.showScreen('classes');
-}
-
-function showLevels() {
-  const list = document.getElementById('level-list');
-  list.innerHTML = NODES.map((n, i) =>
-    '<div class="level-card" data-idx="' + i + '"><div class="lc-icon">' + (n.enemyId === 'boss' ? '🏢' : enemyById(n.enemyId).icon) + '</div><div class="lc-name">' + n.label + '</div><div class="lc-desc">难度 ' + (i + 1) + (n.enemyId === 'boss' ? ' · Boss' : '') + '</div></div>'
-  ).join('');
-  list.querySelectorAll('.level-card').forEach(el => el.addEventListener('click', () => {
+// —— 游戏 / 选关 ——
+function renderPlay() {
+  const list = document.getElementById('play-list');
+  list.innerHTML = NODES.map((n, i) => {
+    const isBoss = n.enemyId === 'boss';
+    const icon = isBoss ? bossByChapter(1).icon : enemyById(n.enemyId).icon;
+    const name = isBoss ? bossByChapter(1).name : enemyById(n.enemyId).name;
+    const gold = isBoss ? SHOP.bossGold : SHOP.winGold;
+    return '<div class="mode-card comic-panel' + (isBoss ? ' boss' : '') + '" data-idx="' + i + '">'
+      + '<div class="mode-icon">' + icon + '</div>'
+      + '<div class="mode-info"><div class="mode-name">' + n.label + '</div>'
+      + '<div class="mode-meta">' + (isBoss ? 'Boss · ' : '') + name + '</div>'
+      + '<div class="mode-reward">胜利 +' + gold + ' 金币</div></div>'
+      + '<div class="mode-go">▶</div></div>';
+  }).join('');
+  list.querySelectorAll('.mode-card').forEach(el => el.addEventListener('click', () => {
     beginBattle(parseInt(el.dataset.idx, 10));
   }));
-  UI.showScreen('levels');
 }
 
-function showShop() { renderShop(); UI.showScreen('shop'); }
+// —— 英雄 ——
+function renderHeroes() {
+  const list = document.getElementById('hero-list');
+  list.innerHTML = CLASSES.map(c =>
+    '<div class="hero-card comic-panel" data-id="' + c.id + '">'
+    + '<div class="hero-card-icon">' + c.icon + '</div>'
+    + '<div class="hero-card-name">' + c.name + '</div>'
+    + '<div class="hero-card-desc">' + c.desc + '</div></div>'
+  ).join('');
+  list.querySelectorAll('.hero-card').forEach(el => el.addEventListener('click', () => {
+    list.querySelectorAll('.hero-card').forEach(x => x.classList.remove('selected'));
+    el.classList.add('selected');
+    renderHeroDetail(el.dataset.id);
+  }));
+  const first = Run.classId || CLASSES[0].id;
+  const firstEl = list.querySelector('.hero-card[data-id="' + first + '"]');
+  if (firstEl) firstEl.classList.add('selected');
+  renderHeroDetail(first);
+}
+
+function renderHeroDetail(id) {
+  const c = classById(id);
+  if (!c) return;
+  const cards = c.starterDeck.map(cid => cardById(cid)).filter(Boolean);
+  const cardNames = cards.map(k => k.icon + ' ' + k.name).join('、');
+  const detail = document.getElementById('hero-detail');
+  detail.innerHTML = '<div class="hero-detail-top comic-panel">'
+    + '<div class="hd-icon">' + c.icon + '</div>'
+    + '<div class="hd-info"><div class="hd-name">' + c.name + '</div>'
+    + '<div class="hd-desc">' + c.desc + '</div>'
+    + (c.passive ? '<div class="hd-passive">被动：' + c.passive.name + ' · ' + c.passive.desc + '</div>' : '')
+    + '</div></div>'
+    + '<div class="hero-deck comic-panel"><div class="hd-sub">初始卡组</div><div class="hd-cards">' + cardNames + '</div></div>'
+    + '<button class="btn btn-primary comic-btn hd-select" data-id="' + c.id + '">选择出战</button>';
+  detail.querySelector('.hd-select').addEventListener('click', () => {
+    newRun(id);
+    goHome();
+  });
+}
+
+// —— 开发中 ——
+function showComingSoon(name) {
+  document.getElementById('coming-title').textContent = name + ' · 开发中';
+  document.getElementById('coming-desc').textContent = '该模块将在后续版本开放，敬请期待。';
+  navTo('coming');
+}
 
 function renderShop() {
   document.getElementById('shop-gold').textContent = Run.gold;
+  updateShellGold();
   const packHtml = kind => {
     const available = Run.shop.packs[kind];
     const cost = kind === 'normal' ? SHOP.normalPackCost : kind === 'premium' ? SHOP.premiumPackCost : SHOP.skillPackCost;
@@ -111,11 +195,11 @@ function renderShop() {
     const desc = kind === 'skill'
       ? ('开 ' + SHOP.skillPackSize + ' 张技能卡，选 1 张')
       : (kind === 'premium' ? ('开 ' + SHOP.premiumPackSize + ' 张手卡，选 2 张') : ('开 ' + SHOP.normalPackSize + ' 张手卡，选 1 张'));
-    return '<div class="pack-btn' + (available ? '' : ' disabled') + '" data-pack="' + kind + '"><div class="pb-name">' + name + '</div><div class="pb-desc">' + (available ? desc : '已售空') + '</div><div class="pb-price">' + (available ? (cost + ' 金币') : '—') + '</div></div>';
+    return '<div class="pack-btn comic-panel' + (available ? '' : ' disabled') + '" data-pack="' + kind + '"><div class="pb-name">' + name + '</div><div class="pb-desc">' + (available ? desc : '已售空') + '</div><div class="pb-price">' + (available ? (cost + ' 金币') : '—') + '</div></div>';
   };
   document.getElementById('shop-packs').innerHTML =
-    '<div class="pack-row">' + packHtml('normal') + packHtml('premium') + packHtml('skill') + '</div>' +
-    '<div class="pack-btn' + (Run.gold < Run.shop.resetCost ? ' disabled' : '') + '" id="btn-reset-packs"><div class="pb-name">重置卡包</div><div class="pb-desc">恢复 3 个卡包（直购槽不恢复）</div><div class="pb-price">' + Run.shop.resetCost + ' 金币</div></div>';
+    '<div class="pack-row">' + packHtml('normal') + packHtml('premium') + packHtml('skill') + '</div>'
+    + '<div class="pack-btn comic-panel' + (Run.gold < Run.shop.resetCost ? ' disabled' : '') + '" id="btn-reset-packs"><div class="pb-name">重置卡包</div><div class="pb-desc">恢复 3 个卡包（直购槽不恢复）</div><div class="pb-price">' + Run.shop.resetCost + ' 金币</div></div>';
   document.querySelectorAll('[data-pack]').forEach(el => el.addEventListener('click', () => {
     if (el.classList.contains('disabled')) return;
     buyPack(el.dataset.pack);
@@ -124,8 +208,8 @@ function renderShop() {
   resetBtn.addEventListener('click', () => { if (!resetBtn.classList.contains('disabled')) resetShop(); });
 
   document.getElementById('shop-slots').innerHTML = Run.shop.slots.map((s, i) => {
-    if (!s) return '<div class="shop-card disabled"><div class="sc-name">已售空</div><div class="sc-desc">—</div></div>';
-    return '<div class="shop-card" data-idx="' + i + '"><div class="sc-name">' + s.icon + ' ' + s.name + '</div><div class="sc-desc">' + s.desc + '</div><div class="sc-price">' + SHOP.shopCardCost + ' 金币</div></div>';
+    if (!s) return '<div class="shop-card comic-panel disabled"><div class="sc-name">已售空</div><div class="sc-desc">—</div></div>';
+    return '<div class="shop-card comic-panel" data-idx="' + i + '"><div class="sc-name">' + s.icon + ' ' + s.name + '</div><div class="sc-desc">' + s.desc + '</div><div class="sc-price">' + SHOP.shopCardCost + ' 金币</div></div>';
   }).join('');
   document.querySelectorAll('#shop-slots .shop-card[data-idx]').forEach(el => el.addEventListener('click', () => {
     buyShopSlot(parseInt(el.dataset.idx, 10));
@@ -176,6 +260,7 @@ function addSkill(id) {
 
 function beginBattle(nodeIndex) {
   Run.node = nodeIndex;
+  setShell(false);
   UI.showScreen('run');
   UI.resetTurn();
   Combat.start(nodeIndex, Run.deck, Run.equip, Run.hp, Run.classId,
