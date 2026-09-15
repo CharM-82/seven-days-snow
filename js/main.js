@@ -565,8 +565,8 @@ function renderShop() {
 function buyPack(kind) {
   if (!Run.shop.packs[kind]) return;
   let cost, size, pick, pool, title, isSkill;
-  if (kind === 'normal') { cost = SHOP.normalPackCost; size = SHOP.normalPackSize; pick = 1; pool = handPool(); title = '普通手卡包（选 1 张）'; isSkill = false; }
-  else if (kind === 'premium') { cost = SHOP.premiumPackCost; size = SHOP.premiumPackSize; pick = 2; pool = handPool(); title = '高级手卡包（选 2 张）'; isSkill = false; }
+  if (kind === 'normal') { cost = SHOP.normalPackCost; size = SHOP.normalPackSize; pick = 1; pool = getClassBasicCardPool(Run.classId, 'shop-basic-pack'); title = '普通手卡包（选 1 张）'; isSkill = false; }
+  else if (kind === 'premium') { cost = SHOP.premiumPackCost; size = SHOP.premiumPackSize; pick = 2; pool = getClassBasicCardPool(Run.classId, 'shop-basic-pack'); title = '高级手卡包（选 2 张）'; isSkill = false; }
   else { cost = SHOP.skillPackCost; size = SHOP.skillPackSize; pick = 1; pool = weightedSampleSkills(size); title = '技能卡包（选 1 张）'; isSkill = true; }
   if (Run.gold < cost) return;
   Run.gold -= cost;

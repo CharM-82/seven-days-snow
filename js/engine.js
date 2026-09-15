@@ -128,6 +128,7 @@ const Combat = (function () {
       case 'multAdd': return '倍数 ' + fmt(S.turnMult) + ' → ' + fmt(S.turnMult + e.value);
       case 'multMul': return '倍数 ' + fmt(S.turnMult) + ' → ' + fmt(S.turnMult * e.value);
       case 'vuln': return '施加 ' + e.value + ' 易伤';
+      case 'returnFromDiscard': return '从弃牌堆取回 ' + e.value + ' 张普通牌';
       default: return '';
     }
   }
@@ -162,6 +163,21 @@ const Combat = (function () {
         S.enemy.vuln += e.value;
         log('boss', S.enemy.name + ' 获得 ' + e.value + ' 易伤');
         break;
+      case 'returnFromDiscard': {
+        let n = e.value;
+        while (n > 0) {
+          let found = -1;
+          for (let i = S.discard.length - 1; i >= 0; i--) {
+            if (S.discard[i].cardFamily === 'basic-hand') { found = i; break; }
+          }
+          if (found < 0) break;
+          const c = S.discard.splice(found, 1)[0];
+          S.hand.push(c);
+          n--;
+        }
+        log('player', '回收 ' + e.value + ' 张普通牌');
+        break;
+      }
     }
   }
 

@@ -1,9 +1,9 @@
 // 《七日回雪》v3 卡牌原型 · 数据配置（数值集中在此便于调参）
 'use strict';
 
-const APP_VERSION = '2026.09.16-class3-1';
+const APP_VERSION = '2026.09.16-class3-2';
 const SAVE_SCHEMA_VERSION = 2;
-const CONTENT_VERSION = 3;
+const CONTENT_VERSION = 4;
 
 const GAME = {
   playerHp: 60,
@@ -53,19 +53,30 @@ const CARDS = [
   { id: 'bs-frost', name: '寒霜回旋', type: 'attack', cost: 1, icon: '❄️', desc: '造成 3 点伤害，命中 2 次', damage: 3, hits: 2, starter: true, cardFamily: 'basic-hand', classId: 'breaker' },
   { id: 'bs-block', name: '冰壳', type: 'skill', cost: 1, icon: '🧊', desc: '获得 5 点护甲', effects: [{ type: 'block', value: 5 }], starter: true, cardFamily: 'basic-hand', classId: 'breaker' },
   { id: 'bs-overpower', name: '破冰突进', type: 'attack', cost: 2, icon: '💥', desc: '造成 10 点伤害', damage: 10, hits: 1, starter: true, cardFamily: 'basic-hand', classId: 'breaker' },
+  { id: 'bs-pierce', name: '凿穿', type: 'attack', cost: 1, icon: '⛏️', desc: '造成 7 点伤害', damage: 7, hits: 1, starter: true, cardFamily: 'basic-hand', classId: 'breaker' },
+  { id: 'bs-crush', name: '裂甲震荡', type: 'attack', cost: 2, icon: '🔨', desc: '造成 12 点伤害', damage: 12, hits: 1, starter: true, cardFamily: 'basic-hand', classId: 'breaker' },
+  { id: 'bs-blade', name: '冰刃追击', type: 'attack', cost: 1, icon: '🧊', desc: '造成 4 点伤害，命中 2 次', damage: 4, hits: 2, starter: true, cardFamily: 'basic-hand', classId: 'breaker' },
+  { id: 'bs-wall', name: '冰壁', type: 'skill', cost: 1, icon: '🧱', desc: '获得 6 点护甲', effects: [{ type: 'block', value: 6 }], starter: true, cardFamily: 'basic-hand', classId: 'breaker' },
 
   // 守望者普通基础手牌
   { id: 'sn-shield', name: '盾击', type: 'attack', cost: 1, icon: '🛡️', desc: '造成 4 点伤害', damage: 4, hits: 1, starter: true, cardFamily: 'basic-hand', classId: 'guardian' },
   { id: 'sn-fortify', name: '坚守阵线', type: 'skill', cost: 1, icon: '🏰', desc: '获得 7 点护甲', effects: [{ type: 'block', value: 7 }], starter: true, cardFamily: 'basic-hand', classId: 'guardian' },
   { id: 'sn-rally', name: '战场号令', type: 'skill', cost: 1, icon: '📣', desc: '获得 1 点行动力，抽 1 张牌', effects: [{ type: 'energy', value: 1 }, { type: 'draw', value: 1 }], starter: true, cardFamily: 'basic-hand', classId: 'guardian' },
   { id: 'sn-comeback', name: '守势反击', type: 'attack', cost: 2, icon: '🔥', desc: '造成 8 点伤害；生命≤30 时基础伤害×2', damage: 8, hits: 1, bonus: { type: 'hpLe', value: 30, mult: 2 }, starter: true, cardFamily: 'basic-hand', classId: 'guardian' },
+  { id: 'sn-raise', name: '举盾', type: 'skill', cost: 1, icon: '🛡️', desc: '获得 5 点护甲', effects: [{ type: 'block', value: 5 }], starter: true, cardFamily: 'basic-hand', classId: 'guardian' },
+  { id: 'sn-bash', name: '护甲冲撞', type: 'attack', cost: 1, icon: '💥', desc: '造成 4 点伤害', damage: 4, hits: 1, starter: true, cardFamily: 'basic-hand', classId: 'guardian' },
+  { id: 'sn-bulwark', name: '壁垒推进', type: 'skill', cost: 1, icon: '🏰', desc: '获得 4 护甲，本回合倍数 +1', effects: [{ type: 'block', value: 4 }, { type: 'multAdd', value: 1 }], starter: true, cardFamily: 'basic-hand', classId: 'guardian' },
+  { id: 'sn-guard', name: '拒退', type: 'skill', cost: 1, icon: '🛡️', desc: '获得 3 护甲，抽 1 张牌', effects: [{ type: 'block', value: 3 }, { type: 'draw', value: 1 }], starter: true, cardFamily: 'basic-hand', classId: 'guardian' },
 
   // 传讯者普通基础手牌
   { id: 'cr-deliver', name: '急递', type: 'attack', cost: 1, icon: '📨', desc: '造成 4 点伤害', damage: 4, hits: 1, starter: true, cardFamily: 'basic-hand', classId: 'courier' },
   { id: 'cr-open', name: '拆封', type: 'skill', cost: 0, icon: '✉️', desc: '抽 1 张牌', effects: [{ type: 'draw', value: 1 }], starter: true, cardFamily: 'basic-hand', classId: 'courier' },
   { id: 'cr-light', name: '轻装', type: 'skill', cost: 1, icon: '🎒', desc: '获得 4 点护甲', effects: [{ type: 'block', value: 4 }], starter: true, cardFamily: 'basic-hand', classId: 'courier' },
   { id: 'cr-reply', name: '回执', type: 'attack', cost: 1, icon: '📬', desc: '造成 3 点伤害；讯序≥2 时 +2', damage: 3, hits: 1, bonus: { type: 'seq', threshold: 2, extra: 2 }, starter: true, cardFamily: 'basic-hand', classId: 'courier' },
-  { id: 'cr-rush', name: '加急件', type: 'attack', cost: 2, icon: '⚡', desc: '造成 6 点伤害；讯序≥3 时 +4', damage: 6, hits: 1, bonus: { type: 'seq', threshold: 3, extra: 4 }, starter: true, cardFamily: 'basic-hand', classId: 'courier' }
+  { id: 'cr-rush', name: '加急件', type: 'attack', cost: 2, icon: '⚡', desc: '造成 6 点伤害；讯序≥3 时 +4', damage: 6, hits: 1, bonus: { type: 'seq', threshold: 3, extra: 4 }, starter: true, cardFamily: 'basic-hand', classId: 'courier' },
+  { id: 'cr-double', name: '双线投递', type: 'attack', cost: 1, icon: '📦', desc: '造成 2 点伤害，命中 2 次', damage: 2, hits: 2, starter: true, cardFamily: 'basic-hand', classId: 'courier' },
+  { id: 'cr-ticket', name: '回程票', type: 'skill', cost: 1, icon: '🎫', desc: '获得 5 护甲，抽 1 张牌', effects: [{ type: 'block', value: 5 }, { type: 'draw', value: 1 }], starter: true, cardFamily: 'basic-hand', classId: 'courier' },
+  { id: 'cr-return', name: '失联重发', type: 'skill', cost: 1, icon: '🔁', desc: '从弃牌堆取回 1 张普通牌', effects: [{ type: 'returnFromDiscard', value: 1 }], starter: true, cardFamily: 'basic-hand', classId: 'courier' }
 ];
 
 const EQUIPMENTS = [
@@ -311,6 +322,14 @@ const SKILL_RARITY = {
   special: { color: '#F49A38', label: '特殊', weight: 2 }
 };
 function skillPool() { return ALL_SKILL_CARDS; }
+function getClassBasicCardPool(classId, source) {
+  return CARDS.filter(card => {
+    if (card.cardFamily !== 'basic-hand') return false;
+    if (card.owner && card.owner !== 'player') return false;
+    if (card.classId !== classId && card.classId !== 'neutral') return false;
+    return true;
+  });
+}
 function weightedSkillPool() {
   return ALL_SKILL_CARDS.map(s => ({ id: s.id, weight: (s.dropWeight || 1) * (SKILL_RARITY[s.rarity] ? SKILL_RARITY[s.rarity].weight : 0) }));
 }
@@ -350,7 +369,11 @@ function validateData() {
     if (bossTitles.has(b.title)) errors.push('Boss 称号重复: ' + b.title);
     bossNames.add(b.name); bossTitles.add(b.title);
   });
+  ['breaker', 'guardian', 'courier'].forEach(id => {
+    const n = getClassBasicCardPool(id).length;
+    if (n < 8) errors.push('职业普通牌不足 8 张: ' + id + ' = ' + n);
+  });
   if (errors.length) console.warn('[data-validate]', errors);
   return errors;
 }
-if (typeof module !== 'undefined' && module.exports) module.exports = { GAME, CARDS, EQUIPMENTS, ENEMIES, BOSSES, NODES, CLASSES, SKILL_CARDS, ALL_SKILL_CARDS, SHOP, BOSS_BUFFS, BOSS_DECKS, cardById, equipById, enemyById, bossByChapter, cardPool, classById, skillById, handPool, skillPool, bossBuffs, bossDeck, validateData, CHAPTERS, chapterById, SKILL_RARITY, weightedSkillPool, APP_VERSION, SAVE_SCHEMA_VERSION, CONTENT_VERSION };
+if (typeof module !== 'undefined' && module.exports) module.exports = { GAME, CARDS, EQUIPMENTS, ENEMIES, BOSSES, NODES, CLASSES, SKILL_CARDS, ALL_SKILL_CARDS, SHOP, BOSS_BUFFS, BOSS_DECKS, cardById, equipById, enemyById, bossByChapter, cardPool, classById, skillById, handPool, skillPool, bossBuffs, bossDeck, validateData, CHAPTERS, chapterById, SKILL_RARITY, weightedSkillPool, APP_VERSION, SAVE_SCHEMA_VERSION, CONTENT_VERSION, getClassBasicCardPool };
