@@ -571,3 +571,28 @@ html, body { background: var(--page-bg); }
 .mode-card.locked { opacity: .38; cursor: not-allowed; }
 .mode-card .mode-go { width: 22px; text-align: center; }
 #btn-shop-done { width: 100%; margin-top: 12px; }
+
+/* 任务 / 补给档案 / 牌组 / 生涯 / 设置 */
+.quest-row { padding: 12px; text-align: left; margin-bottom: 10px; }
+.quest-row .qr-name { font-size: 15px; font-weight: 800; color: var(--paper-100); }
+.quest-row .qr-progress { font-size: 12px; color: var(--cyan-400); margin-top: 4px; }
+.quest-row .qr-claim { margin-top: 8px; }
+.quest-row.claimed { opacity: .55; }
+.archive-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+.archive-card { padding: 10px; text-align: center; }
+.archive-card .ac-icon { font-size: 30px; line-height: 1; }
+.archive-card .ac-name { margin-top: 6px; font-size: 13px; font-weight: 800; color: var(--paper-100); }
+.archive-card .ac-desc { margin-top: 4px; font-size: 10px; color: var(--paper-400); line-height: 1.35; }
+.archive-sec { font-size: 13px; font-weight: 800; color: var(--yellow-400); margin: 12px 2px 8px; }
+.deck-row { display: flex; align-items: center; gap: 10px; padding: 10px; margin-bottom: 8px; }
+.deck-row .dr-icon { font-size: 24px; }
+.deck-row .dr-info { flex: 1; }
+.deck-row .dr-name { font-size: 14px; font-weight: 800; color: var(--paper-100); }
+.deck-row .dr-desc { font-size: 11px; color: var(--paper-400); margin-top: 2px; }
+.deck-row .dr-count { font-size: 16px; font-weight: 900; color: var(--orange-500); }
+.career-row { display: flex; justify-content: space-between; padding: 12px; margin-bottom: 8px; font-size: 14px; color: var(--paper-100); }
+.setting-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; margin-bottom: 10px; }
+.setting-row .sr-name { font-size: 15px; font-weight: 800; color: var(--paper-100); }
+.setting-row .sr-desc { font-size: 11px; color: var(--paper-400); margin-top: 3px; }
+.empty-tip { text-align: center; color: var(--paper-400); font-size: 13px; padding: 24px 0; }
+html.reduced-motion *, html.reduced-motion *::before, html.reduced-motion *::after { animation-duration: .001s !important; transition-duration: .001s !important; }

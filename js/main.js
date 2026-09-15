@@ -13,13 +13,25 @@ let Run = {
   nodeIndex: 0,
   route: null,
   seed: null,
-  shop: null
+  shop: null,
+  quests: null
 };
+
+const SETTINGS_KEY = 'qirihui-settings';
+const STATS_KEY = 'qirihui-stats';
+let Settings = { reducedMotion: false };
+
+const QUESTS = [
+  { id: 'winBattle', name: '完成一场战斗', target: 1, reward: 20 },
+  { id: 'visitShop', name: '进入一次补给站', target: 1, reward: 10 },
+  { id: 'killBoss', name: '击败一个 Boss', target: 1, reward: 50 }
+];
 
 function shuffle(arr) { return RNG.shuffle(arr); }
 function sample(arr, n) { return RNG.shuffle(arr).slice(0, n); }
 
 function init() {
+  loadSettings();
   bind();
   UI.initInteraction();
   const saved = loadRun();
@@ -66,7 +78,7 @@ function bind() {
     if (s === 'home') goHome();
     else if (s === 'play') showPlay();
     else if (s === 'heroes') showHeroes();
-    else if (s === 'shop') showShop();
+    else if (s === 'quests') showQuests();
   }));
 
   document.getElementById('nav-more').addEventListener('click', () => {
@@ -80,7 +92,12 @@ function bind() {
   });
   document.querySelectorAll('.more-item').forEach(btn => btn.addEventListener('click', () => {
     document.getElementById('more-drawer').classList.add('hidden');
-    showComingSoon(btn.dataset.coming);
+    const scr = btn.dataset.screen;
+    if (scr === 'archive') showArchive();
+    else if (scr === 'deck') showDeck();
+    else if (scr === 'career') showCareer();
+    else if (scr === 'settings') showSettings();
+    else showComingSoon(btn.dataset.coming);
   }));
 
   document.getElementById('btn-home-primary').addEventListener('click', () => {
@@ -106,7 +123,7 @@ function saveRun() {
   const data = {
     classId: Run.classId, deck: Run.deck, equip: Run.equip, hp: Run.hp,
     gold: Run.gold, chapter: Run.chapter, nodeIndex: Run.nodeIndex,
-    route: Run.route, seed: Run.seed, shop: Run.shop
+    route: Run.route, seed: Run.seed, shop: Run.shop, quests: Run.quests
   };
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch (e) {}
 }
@@ -134,6 +151,7 @@ function newRun(classId) {
   Run.nodeIndex = 0;
   Run.route = chapterById(1).nodes;
   Run.seed = RNG.seed(Date.now());
+  Run.quests = { winBattle: 0, visitShop: 0, killBoss: 0, claimed: {} };
   restockShop();
   saveRun();
 }
@@ -206,6 +224,9 @@ function enterNode(i) {
   if (node.type === 'battle' || node.type === 'elite' || node.type === 'boss') {
     beginBattle(node);
   } else if (node.type === 'shop') {
+    if (Run.quests) Run.quests.visitShop = (Run.quests.visitShop || 0) + 1;
+    addStat('shopVisits', 1);
+    saveRun();
     renderShop();
     const done = document.getElementById('btn-shop-done');
     done.classList.remove('hidden');
@@ -283,6 +304,104 @@ function showComingSoon(name) {
   document.getElementById('coming-title').textContent = name + ' · 开发中';
   document.getElementById('coming-desc').textContent = '该模块将在后续版本开放，敬请期待。';
   navTo('coming');
+}
+
+
+// —— 设置 / 统计 ——
+function loadSettings() {
+  try { const raw = localStorage.getItem(SETTINGS_KEY); if (raw) Settings = Object.assign({}, Settings, JSON.parse(raw)); } catch (e) {}
+  applySettings();
+}
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(Settings)); } catch (e) {}
+  applySettings();
+}
+function applySettings() {
+  document.documentElement.classList.toggle('reduced-motion', !!Settings.reducedMotion);
+}
+function loadStats() {
+  try { const raw = localStorage.getItem(STATS_KEY); return raw ? JSON.parse(raw) : {}; } catch (e) { return {}; }
+}
+function addStat(key, n) {
+  const st = loadStats();
+  st[key] = (st[key] || 0) + n;
+  try { localStorage.setItem(STATS_KEY, JSON.stringify(st)); } catch (e) {}
+}
+
+// —— 任务 ——
+function showQuests() { renderQuests(); navTo('quests'); }
+function renderQuests() {
+  if (!Run.quests) return;
+  const list = document.getElementById('quest-list');
+  list.innerHTML = QUESTS.map(q => {
+    const progress = Math.min(q.target, Run.quests[q.id] || 0);
+    const claimed = Run.quests.claimed[q.id];
+    const done = progress >= q.target;
+    return '<div class="quest-row comic-panel' + (claimed ? ' claimed' : '') + (done ? ' done' : '') + '">'
+      + '<div class="qr-name">' + q.name + '</div>'
+      + '<div class="qr-progress">' + progress + '/' + q.target + '</div>'
+      + '<button class="btn comic-btn qr-claim' + (done && !claimed ? '' : ' hidden') + '" data-id="' + q.id + '">领取 ' + q.reward + ' 金币</button></div>';
+  }).join('');
+  list.querySelectorAll('.qr-claim').forEach(btn => btn.addEventListener('click', () => {
+    const id = btn.dataset.id;
+    const q = QUESTS.find(x => x.id === id);
+    if (!q || Run.quests.claimed[id]) return;
+    if ((Run.quests[id] || 0) < q.target) return;
+    Run.gold += q.reward;
+    Run.quests.claimed[id] = true;
+    saveRun();
+    renderQuests();
+    updateShellGold();
+  }));
+}
+
+// —— 补给档案（只读图鉴） ——
+function showArchive() { renderArchive(); navTo('archive'); }
+function renderArchive() {
+  const list = document.getElementById('archive-list');
+  const hands = CARDS.map(c => '<div class="archive-card comic-panel"><div class="ac-icon">' + c.icon + '</div><div class="ac-name">' + c.name + '</div><div class="ac-desc">' + c.desc + '</div></div>').join('');
+  const skills = ALL_SKILL_CARDS.map(c => '<div class="archive-card comic-panel"><div class="ac-icon">' + c.icon + '</div><div class="ac-name">' + c.name + '</div><div class="ac-desc">' + c.desc + '</div></div>').join('');
+  list.innerHTML = '<div class="archive-sec">普通手牌 ' + CARDS.length + ' 张</div><div class="archive-grid">' + hands + '</div>'
+    + '<div class="archive-sec">技能牌 ' + ALL_SKILL_CARDS.length + ' 张</div><div class="archive-grid">' + skills + '</div>';
+}
+
+// —— 牌组 ——
+function showDeck() { renderDeck(); navTo('deck'); }
+function renderDeck() {
+  const view = document.getElementById('deck-view');
+  if (!Run.classId) { view.innerHTML = '<div class="empty-tip">请先选择英雄</div>'; return; }
+  const counts = {};
+  Run.deck.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
+  const rows = Object.keys(counts).map(id => {
+    const c = cardById(id);
+    if (!c) return '';
+    return '<div class="deck-row comic-panel"><div class="dr-icon">' + c.icon + '</div><div class="dr-info"><div class="dr-name">' + c.name + '</div><div class="dr-desc">' + c.desc + '</div></div><div class="dr-count">×' + counts[id] + '</div></div>';
+  }).join('');
+  view.innerHTML = '<div class="archive-sec">当前牌组 ' + Run.deck.length + ' 张</div>' + (rows || '<div class="empty-tip">暂无卡牌</div>');
+}
+
+// —— 生涯 ——
+function showCareer() { renderCareer(); navTo('career'); }
+function renderCareer() {
+  const st = loadStats();
+  const view = document.getElementById('career-view');
+  const rows = [
+    ['战斗胜利', st.battlesWon || 0],
+    ['战斗失败', st.battlesLost || 0],
+    ['进入补给站', st.shopVisits || 0],
+    ['击败 Boss', st.bossesKilled || 0]
+  ];
+  view.innerHTML = rows.map(r => '<div class="career-row comic-panel"><span>' + r[0] + '</span><strong>' + r[1] + '</strong></div>').join('');
+}
+
+// —— 设置 ——
+function showSettings() { renderSettings(); navTo('settings'); }
+function renderSettings() {
+  const view = document.getElementById('settings-view');
+  view.innerHTML = '<div class="setting-row comic-panel"><div class="sr-info"><div class="sr-name">减少动态效果</div><div class="sr-desc">关闭位移和大部分动画</div></div><button class="btn comic-btn sr-toggle" data-key="reducedMotion">' + (Settings.reducedMotion ? '开' : '关') + '</button></div>'
+    + '<button class="btn comic-btn sr-clear" id="btn-clear-save">清除本局存档</button>';
+  view.querySelector('.sr-toggle').addEventListener('click', () => { Settings.reducedMotion = !Settings.reducedMotion; saveSettings(); renderSettings(); });
+  view.querySelector('#btn-clear-save').addEventListener('click', () => { clearRun(); renderSettings(); goHome(); });
 }
 
 // —— 商城 ——
@@ -382,6 +501,7 @@ function beginBattle(node) {
 function onBattleEnd(win, S) {
   Run.hp = S.player.hp;
   if (!win) {
+    addStat('battlesLost', 1);
     document.getElementById('result-big').textContent = '❄️';
     document.getElementById('result-title').textContent = '差一点…';
     document.getElementById('result-text').textContent = '再试一次，或返回大厅重新构筑。';
@@ -393,6 +513,12 @@ function onBattleEnd(win, S) {
   const node = Run.route[Run.nodeIndex];
   const gold = node.type === 'boss' ? SHOP.bossGold : node.type === 'elite' ? 70 : SHOP.winGold;
   Run.gold += gold;
+  addStat('battlesWon', 1);
+  if (Run.quests) {
+    Run.quests.winBattle = (Run.quests.winBattle || 0) + 1;
+    if (node.type === 'boss') Run.quests.killBoss = (Run.quests.killBoss || 0) + 1;
+  }
+  if (node.type === 'boss') addStat('bossesKilled', 1);
   restockShop();
 
   if (node.type === 'boss' && Run.chapter >= 5) {

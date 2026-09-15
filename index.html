@@ -89,6 +89,41 @@
       </div>
     </section>
 
+    <section id="screen-quests" class="screen outer">
+      <div class="page-scroll">
+        <div class="page-head"><h2>任务</h2><p>完成目标领取金币</p></div>
+        <div id="quest-list"></div>
+      </div>
+    </section>
+
+    <section id="screen-archive" class="screen outer">
+      <div class="page-scroll">
+        <div class="page-head"><h2>补给档案</h2><p>只能查看，购买请走路线补给站</p></div>
+        <div id="archive-list"></div>
+      </div>
+    </section>
+
+    <section id="screen-deck" class="screen outer">
+      <div class="page-scroll">
+        <div class="page-head"><h2>牌组</h2><p>查看当前牌组</p></div>
+        <div id="deck-view"></div>
+      </div>
+    </section>
+
+    <section id="screen-career" class="screen outer">
+      <div class="page-scroll">
+        <div class="page-head"><h2>生涯</h2><p>历史战绩</p></div>
+        <div id="career-view"></div>
+      </div>
+    </section>
+
+    <section id="screen-settings" class="screen outer">
+      <div class="page-scroll">
+        <div class="page-head"><h2>设置</h2><p>画面与操作</p></div>
+        <div id="settings-view"></div>
+      </div>
+    </section>
+
     <section id="screen-run" class="screen">
       <div id="topbar">
         <div class="node-pill" id="node-label">第 1 战</div>
@@ -176,7 +211,7 @@
       <button class="nav-tab active" data-screen="home" aria-label="大厅"><span class="nav-ico">🏠</span><span class="nav-label">大厅</span></button>
       <button class="nav-tab" data-screen="play" aria-label="游戏"><span class="nav-ico">🎮</span><span class="nav-label">游戏</span></button>
       <button class="nav-tab" data-screen="heroes" aria-label="英雄"><span class="nav-ico">🦸</span><span class="nav-label">英雄</span></button>
-      <button class="nav-tab" data-screen="shop" aria-label="商城"><span class="nav-ico">🛒</span><span class="nav-label">商城</span></button>
+      <button class="nav-tab" data-screen="quests" aria-label="任务"><span class="nav-ico">🎯</span><span class="nav-label">任务</span></button>
       <button class="nav-tab" id="nav-more" aria-label="更多"><span class="nav-ico">☰</span><span class="nav-label">更多</span></button>
     </nav>
 
@@ -185,11 +220,11 @@
       <div class="more-panel comic-panel">
         <div class="more-title">更多模块</div>
         <div class="more-list">
-          <button class="more-item" data-coming="牌组">🃏 牌组</button>
-          <button class="more-item" data-coming="任务">📋 任务</button>
-          <button class="more-item" data-coming="生涯">🏅 生涯</button>
+          <button class="more-item" data-screen="archive">📦 补给档案</button>
+          <button class="more-item" data-screen="deck">🃏 牌组</button>
+          <button class="more-item" data-screen="career">🏅 生涯</button>
+          <button class="more-item" data-screen="settings">⚙️ 设置</button>
           <button class="more-item" data-coming="社交">👥 社交</button>
-          <button class="more-item" data-coming="设置">⚙️ 设置</button>
         </div>
         <button id="btn-more-close" class="btn comic-btn">关闭</button>
       </div>
