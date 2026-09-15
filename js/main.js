@@ -1,7 +1,8 @@
 // 《七日回雪》v10 五章路线 · 主流程
 'use strict';
 
-const SAVE_KEY = 'qirihui-run';
+const SAVE_KEY = 'qirihui-run-v2';
+const APP_VERSION_KEY = 'qirihui-app-version';
 
 let Run = {
   classId: null,
@@ -20,6 +21,8 @@ let Run = {
 const SETTINGS_KEY = 'qirihui-settings';
 const STATS_KEY = 'qirihui-stats';
 let Settings = { reducedMotion: false };
+let pendingClassId = null;
+let isCreatingRun = false;
 
 const QUESTS = [
   { id: 'winBattle', name: '完成一场战斗', target: 1, reward: 2 },
@@ -30,19 +33,55 @@ const QUESTS = [
 function shuffle(arr) { return RNG.shuffle(arr); }
 function sample(arr, n) { return RNG.shuffle(arr).slice(0, n); }
 
+function ensureCurrentAppVersion() {
+  const prev = localStorage.getItem(APP_VERSION_KEY);
+  if (prev === APP_VERSION) return false;
+  const legacyKeys = ['qirihui-run', 'qirihui-run-v2'];
+  for (const k of legacyKeys) { try { localStorage.removeItem(k); } catch (e) {} }
+  try { localStorage.setItem(APP_VERSION_KEY, APP_VERSION); } catch (e) {}
+  return true;
+}
+function isValidRun(run) {
+  return Boolean(
+    run && typeof run === 'object' &&
+    run.saveVersion === SAVE_SCHEMA_VERSION &&
+    typeof run.runId === 'string' &&
+    typeof run.classId === 'string' &&
+    classById(run.classId) &&
+    Number.isFinite(run.gold) &&
+    Number.isInteger(run.chapter) && run.chapter >= 1 &&
+    Array.isArray(run.deck) && Array.isArray(run.equip)
+  );
+}
+function clearCurrentRun() {
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+  Run = { classId: null, deck: [], equip: [null,null,null], hp: GAME.playerHp, gold: SHOP.startGold, chapter: 1, nodeIndex: 0, route: null, seed: null, shop: null, quests: null };
+}
+function resolveStartupScreen() {
+  const versionChanged = ensureCurrentAppVersion();
+  if (versionChanged) { clearCurrentRun(); return { screen: 'class-select', run: null }; }
+  const saved = loadRun();
+  if (!isValidRun(saved)) { clearCurrentRun(); return { screen: 'class-select', run: null }; }
+  return { screen: 'resume', run: saved };
+}
+function requireActiveRun(action) {
+  if (!isValidRun(Run)) { showHeroes(); UI.pushLog('player', '请先选择职业并开始本局'); return false; }
+  action();
+  return true;
+}
 function init() {
   loadSettings();
   bind();
   UI.initInteraction();
-  const saved = loadRun();
-  if (saved) {
-    Run = Object.assign({}, Run, saved);
+  const decision = resolveStartupScreen();
+  if (decision.screen === 'class-select') {
+    showHeroes();
+  } else {
+    Run = Object.assign({}, Run, decision.run);
     if (!Run.route && Run.chapter) Run.route = chapterById(Run.chapter).nodes;
     if (!Run.shop) restockShop();
     renderHome();
     navTo('home');
-  } else {
-    showHeroes();
   }
   if (!Run.seed) Run.seed = RNG.seed(Date.now());
   if (typeof validateData === 'function') validateData();
@@ -107,6 +146,14 @@ function bind() {
     else showHeroes();
   });
   document.getElementById('btn-home-play').addEventListener('click', showPlay);
+  document.getElementById('btn-start-run').addEventListener('click', () => {
+    if (!pendingClassId || isCreatingRun) return;
+    createNewRun(pendingClassId);
+    pendingClassId = null;
+    setShell(true);
+    renderHome();
+    navTo('home');
+  });
   document.getElementById('btn-coming-back').addEventListener('click', goHome);
   document.getElementById('btn-restart').addEventListener('click', goMapOrHome);
   document.getElementById('btn-shop-done').addEventListener('click', () => {
@@ -123,7 +170,8 @@ function bind() {
 // —— 存档 ——
 function saveRun() {
   const data = {
-    classId: Run.classId, deck: Run.deck, equip: Run.equip, hp: Run.hp,
+    classId: Run.classId, runId: Run.runId, saveVersion: Run.saveVersion, contentVersion: Run.contentVersion, appVersion: Run.appVersion,
+    deck: Run.deck, equip: Run.equip, hp: Run.hp,
     gold: Run.gold, chapter: Run.chapter, nodeIndex: Run.nodeIndex,
     route: Run.route, seed: Run.seed, shop: Run.shop, quests: Run.quests
   };
@@ -143,20 +191,31 @@ function clearRun() {
 }
 
 // —— 新局 ——
-function newRun(classId) {
-  Run.classId = classId;
-  Run.deck = classById(classId).starterDeck.slice();
-  Run.equip = [null, null, null];
-  Run.hp = GAME.playerHp;
-  Run.gold = SHOP.startGold;
-  Run.chapter = 1;
-  Run.nodeIndex = 0;
-  Run.route = chapterById(1).nodes;
-  Run.seed = RNG.seed(Date.now());
-  Run.quests = { winBattle: 0, visitShop: 0, killBoss: 0, claimed: {} };
-  restockShop();
-  saveRun();
+function createNewRun(classId) {
+  if (!classById(classId)) throw new Error('Unknown class: ' + classId);
+  if (isCreatingRun) return;
+  isCreatingRun = true;
+  try {
+    const runId = 'run-' + Date.now().toString(36) + '-' + Math.floor(RNG.next() * 1e9).toString(36);
+    Run = {
+      classId, runId,
+      saveVersion: SAVE_SCHEMA_VERSION, contentVersion: CONTENT_VERSION, appVersion: APP_VERSION,
+      deck: classById(classId).starterDeck.slice(),
+      equip: [null, null, null],
+      hp: GAME.playerHp,
+      gold: SHOP.startGold,
+      chapter: 1, nodeIndex: 0, route: chapterById(1).nodes,
+      seed: RNG.seed(Date.now()),
+      shop: null,
+      quests: { winBattle: 0, visitShop: 0, killBoss: 0, claimed: {} }
+    };
+    restockShop();
+    saveRun();
+  } finally {
+    isCreatingRun = false;
+  }
 }
+function newRun(classId) { createNewRun(classId); }
 
 function skillPrice(skill) {
   if (!skill || !skill.rarity) return SHOP.skillPackCost;
@@ -315,12 +374,15 @@ function renderHeroes() {
   list.querySelectorAll('.hero-card').forEach(el => el.addEventListener('click', () => {
     list.querySelectorAll('.hero-card').forEach(x => x.classList.remove('selected'));
     el.classList.add('selected');
+    pendingClassId = el.dataset.id;
     renderHeroDetail(el.dataset.id);
+    document.getElementById('btn-start-run').disabled = false;
+    document.getElementById('btn-start-run').textContent = '开始本局';
   }));
-  const first = Run.classId || CLASSES[0].id;
-  const firstEl = list.querySelector('.hero-card[data-id="' + first + '"]');
-  if (firstEl) firstEl.classList.add('selected');
-  renderHeroDetail(first);
+  pendingClassId = null;
+  document.getElementById('btn-start-run').disabled = true;
+  document.getElementById('btn-start-run').textContent = '选择职业后开始本局';
+  renderHeroDetail(null);
 }
 
 function renderHeroDetail(id) {
@@ -335,14 +397,7 @@ function renderHeroDetail(id) {
     + '<div class="hd-desc">' + c.desc + '</div>'
     + (c.passive ? '<div class="hd-passive">被动：' + c.passive.name + ' · ' + c.passive.desc + '</div>' : '')
     + '</div></div>'
-    + '<div class="hero-deck comic-panel"><div class="hd-sub">初始卡组</div><div class="hd-cards">' + cardNames + '</div></div>'
-    + '<button class="btn btn-primary comic-btn hd-select" data-id="' + c.id + '">选择出战</button>';
-  detail.querySelector('.hd-select').addEventListener('click', () => {
-    newRun(id);
-    setShell(true);
-    renderHome();
-    navTo('home');
-  });
+    + '<div class="hero-deck comic-panel"><div class="hd-sub">初始卡组</div><div class="hd-cards">' + cardNames + '</div></div>';
 }
 
 // —— 开发中 ——
@@ -446,7 +501,7 @@ function renderCareer() {
 function showSettings() { renderSettings(); navTo('settings'); }
 function renderSettings() {
   const view = document.getElementById('settings-view');
-  view.innerHTML = '<div class="setting-row comic-panel"><div class="sr-info"><div class="sr-name">减少动态效果</div><div class="sr-desc">关闭位移和大部分动画</div></div><button class="btn comic-btn sr-toggle" data-key="reducedMotion">' + (Settings.reducedMotion ? '开' : '关') + '</button></div>'
+  view.innerHTML = '<div class="setting-row comic-panel"><div class="sr-info"><div class="sr-name">减少动态效果</div><div class="sr-desc">关闭位移和大部分动画</div></div><button class="btn comic-btn sr-toggle" data-key="reducedMotion">' + (Settings.reducedMotion ? '开' : '关') + '</button></div>' + '<div class="empty-tip">版本 ' + APP_VERSION + '</div>'
     + '<button class="btn comic-btn sr-clear" id="btn-clear-save">清除本局存档</button>';
   view.querySelector('.sr-toggle').addEventListener('click', () => { Settings.reducedMotion = !Settings.reducedMotion; saveSettings(); renderSettings(); });
   view.querySelector('#btn-clear-save').addEventListener('click', () => { clearRun(); renderSettings(); goHome(); });

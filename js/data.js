@@ -1,6 +1,10 @@
 // 《七日回雪》v3 卡牌原型 · 数据配置（数值集中在此便于调参）
 'use strict';
 
+const APP_VERSION = '2026.09.16-startup-fix-1';
+const SAVE_SCHEMA_VERSION = 2;
+const CONTENT_VERSION = 2;
+
 const GAME = {
   playerHp: 60,
   energy: 3,
@@ -339,4 +343,4 @@ function validateData() {
   if (errors.length) console.warn('[data-validate]', errors);
   return errors;
 }
-if (typeof module !== 'undefined' && module.exports) module.exports = { GAME, CARDS, EQUIPMENTS, ENEMIES, BOSSES, NODES, CLASSES, SKILL_CARDS, ALL_SKILL_CARDS, SHOP, BOSS_BUFFS, BOSS_DECKS, cardById, equipById, enemyById, bossByChapter, cardPool, classById, skillById, handPool, skillPool, bossBuffs, bossDeck, validateData, CHAPTERS, chapterById, SKILL_RARITY, weightedSkillPool };
+if (typeof module !== 'undefined' && module.exports) module.exports = { GAME, CARDS, EQUIPMENTS, ENEMIES, BOSSES, NODES, CLASSES, SKILL_CARDS, ALL_SKILL_CARDS, SHOP, BOSS_BUFFS, BOSS_DECKS, cardById, equipById, enemyById, bossByChapter, cardPool, classById, skillById, handPool, skillPool, bossBuffs, bossDeck, validateData, CHAPTERS, chapterById, SKILL_RARITY, weightedSkillPool, APP_VERSION, SAVE_SCHEMA_VERSION, CONTENT_VERSION };
