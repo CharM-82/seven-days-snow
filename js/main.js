@@ -39,6 +39,7 @@ function bind() {
   document.getElementById('btn-restart').addEventListener('click', goLobby);
   document.getElementById('btn-end-turn').addEventListener('click', () => {
     if (UI.isBusy()) return;
+    UI.shakeTurnEnd();
     Combat.endTurn();
   });
 }

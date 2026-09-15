@@ -254,7 +254,7 @@ body {
   box-shadow: inset 0 0 0 1px var(--border-light), var(--shadow);
 }
 .pbar { display: flex; align-items: center; gap: 8px; }
-.pbar-label { width: 42px; font-size: 11px; color: var(--text-muted); text-align: right; flex: 0 0 auto; }
+.pbar-label { width: 30px; font-size: 15px; color: var(--text-secondary); text-align: center; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; }
 .pbar-track { position: relative; flex: 1; height: 18px; border-radius: 9px; background: rgba(0,0,0,.35); overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,.5); }
 .pbar-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 9px; transition: width .18s; }
 .pbar-fill.hp { background: linear-gradient(90deg, var(--red-strong), var(--red-soft)); }

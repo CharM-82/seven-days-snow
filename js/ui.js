@@ -18,6 +18,10 @@ const UI = (function () {
   let layoutPending = false;
   let queuePending = false;
 
+  const TURN_START_FX = ['startBlock3', 'startDraw1', 'startEnergy1', 'baseMult1', 'emptySlot', 'gamble'];
+  const ON_PLAY_FX = ['randomMult', 'fifth', 'echoLast', 'freeArmor', 'deckDmg', 'decay'];
+  const TURN_END_FX = ['reserve', 'retainBlock3'];
+
   function showScreen(name) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const el = document.getElementById('screen-' + name);
@@ -76,10 +80,13 @@ const UI = (function () {
   }
 
   function shakeEquipOnTurn(S) {
-    S.equip.forEach((id, i) => {
-      const e = id ? equipById(id) : null;
+    shakeEquipsWith(S, TURN_START_FX);
+  }
+  function shakeEquipsWith(S, effects) {
+    (S.equip || []).forEach((id, i) => {
+      const e = id ? skillById(id) : null;
       if (!e) return;
-      if (['startBlock3', 'startDraw1', 'startEnergy1', 'baseMult1'].indexOf(e.effect) >= 0) shakeEl($('#equip-' + i));
+      if (effects.indexOf(e.effect) >= 0) shakeEl($('#equip-' + i));
     });
   }
 
@@ -121,7 +128,7 @@ const UI = (function () {
     for (let i = 0; i < 3; i++) {
       const slot = $('#equip-' + i);
       const id = S.equip[i];
-      const e = id ? equipById(id) : null;
+      const e = id ? skillById(id) : null;
       if (e) { slot.classList.add('filled'); slot.innerHTML = '<div class="eq-name">' + e.icon + ' ' + e.name + '</div><div class="eq-desc">' + e.desc + '</div>'; }
       else { slot.classList.remove('filled'); slot.innerHTML = '技能牌'; }
     }
@@ -402,6 +409,7 @@ const UI = (function () {
     const taken = Combat.takeCardFromHand(i);
     if (!taken) return;
     attackQueue.push(taken);
+    shakeEquipsWith(Combat.state(), ON_PLAY_FX);
     const nums = Combat.attackNumbers(taken);
     accumDamage += nums ? nums.chips : 0;
     accumMult = nums ? nums.mult : Combat.state().turnMult;
@@ -421,6 +429,7 @@ const UI = (function () {
     } else {
       busy = true;
       Combat.playCard(i);
+      shakeEquipsWith(Combat.state(), ON_PLAY_FX);
       triggerScreenFx(kindOf(card));
       setTimeout(() => { busy = false; }, 180);
     }
@@ -514,6 +523,10 @@ const UI = (function () {
     setTimeout(() => { el.classList.add('hidden'); if (onDone) onDone(); }, 1000);
   }
 
+  function shakeTurnEnd() {
+    shakeEquipsWith(Combat.state(), TURN_END_FX);
+  }
+
   function showResult(win, text) {
     $('#result-big').textContent = win ? '🏆' : '❄️';
     $('#result-title').textContent = win ? '守住了临雪市' : '差一点…';
@@ -523,7 +536,7 @@ const UI = (function () {
 
   return {
     showScreen, renderCombat, resetTurn, pushLog, initInteraction, isBusy,
-    showReward, showBossDeath, showResult, showPackModal
+    showReward, showBossDeath, showResult, showPackModal, shakeTurnEnd
   };
 })();
 
