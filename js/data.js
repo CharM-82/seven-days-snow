@@ -1,9 +1,9 @@
 // 《七日回雪》v3 卡牌原型 · 数据配置（数值集中在此便于调参）
 'use strict';
 
-const APP_VERSION = '2026.09.16-startup-fix-1';
+const APP_VERSION = '2026.09.16-class3-1';
 const SAVE_SCHEMA_VERSION = 2;
-const CONTENT_VERSION = 2;
+const CONTENT_VERSION = 3;
 
 const GAME = {
   playerHp: 60,
@@ -58,7 +58,14 @@ const CARDS = [
   { id: 'sn-shield', name: '盾击', type: 'attack', cost: 1, icon: '🛡️', desc: '造成 4 点伤害', damage: 4, hits: 1, starter: true, cardFamily: 'basic-hand', classId: 'guardian' },
   { id: 'sn-fortify', name: '坚守阵线', type: 'skill', cost: 1, icon: '🏰', desc: '获得 7 点护甲', effects: [{ type: 'block', value: 7 }], starter: true, cardFamily: 'basic-hand', classId: 'guardian' },
   { id: 'sn-rally', name: '战场号令', type: 'skill', cost: 1, icon: '📣', desc: '获得 1 点行动力，抽 1 张牌', effects: [{ type: 'energy', value: 1 }, { type: 'draw', value: 1 }], starter: true, cardFamily: 'basic-hand', classId: 'guardian' },
-  { id: 'sn-comeback', name: '守势反击', type: 'attack', cost: 2, icon: '🔥', desc: '造成 8 点伤害；生命≤30 时基础伤害×2', damage: 8, hits: 1, bonus: { type: 'hpLe', value: 30, mult: 2 }, starter: true, cardFamily: 'basic-hand', classId: 'guardian' }
+  { id: 'sn-comeback', name: '守势反击', type: 'attack', cost: 2, icon: '🔥', desc: '造成 8 点伤害；生命≤30 时基础伤害×2', damage: 8, hits: 1, bonus: { type: 'hpLe', value: 30, mult: 2 }, starter: true, cardFamily: 'basic-hand', classId: 'guardian' },
+
+  // 传讯者普通基础手牌
+  { id: 'cr-deliver', name: '急递', type: 'attack', cost: 1, icon: '📨', desc: '造成 4 点伤害', damage: 4, hits: 1, starter: true, cardFamily: 'basic-hand', classId: 'courier' },
+  { id: 'cr-open', name: '拆封', type: 'skill', cost: 0, icon: '✉️', desc: '抽 1 张牌', effects: [{ type: 'draw', value: 1 }], starter: true, cardFamily: 'basic-hand', classId: 'courier' },
+  { id: 'cr-light', name: '轻装', type: 'skill', cost: 1, icon: '🎒', desc: '获得 4 点护甲', effects: [{ type: 'block', value: 4 }], starter: true, cardFamily: 'basic-hand', classId: 'courier' },
+  { id: 'cr-reply', name: '回执', type: 'attack', cost: 1, icon: '📬', desc: '造成 3 点伤害；讯序≥2 时 +2', damage: 3, hits: 1, bonus: { type: 'seq', threshold: 2, extra: 2 }, starter: true, cardFamily: 'basic-hand', classId: 'courier' },
+  { id: 'cr-rush', name: '加急件', type: 'attack', cost: 2, icon: '⚡', desc: '造成 6 点伤害；讯序≥3 时 +4', damage: 6, hits: 1, bonus: { type: 'seq', threshold: 3, extra: 4 }, starter: true, cardFamily: 'basic-hand', classId: 'courier' }
 ];
 
 const EQUIPMENTS = [
@@ -265,7 +272,10 @@ const CLASSES = [
     passive: null },
   { id: 'guardian', name: '守望者', icon: '🛡️', desc: '护甲防御 · 绝地反击',
     starterDeck: ['sn-shield','sn-shield','sn-shield','sn-fortify','sn-fortify','sn-fortify','sn-rally','sn-rally','sn-comeback','sn-comeback'],
-    passive: { id: 'lastStand', name: '绝地反击', desc: '撑过10回合后，本场战斗直接获胜' } }
+    passive: { id: 'lastStand', name: '绝地反击', desc: '撑过10回合后，本场战斗直接获胜' } },
+  { id: 'courier', name: '传讯者', title: '雪线信使', icon: '📮', desc: '抽弃循环 · 连携回响',
+    starterDeck: ['cr-deliver','cr-deliver','cr-deliver','cr-open','cr-open','cr-light','cr-light','cr-reply','cr-reply','cr-rush'],
+    passive: null }
 ];
 
 const SKILL_CARDS = [

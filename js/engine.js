@@ -78,6 +78,7 @@ const Combat = (function () {
     if (hasSkill('gamble')) S.turnMult += 15;
     S.attacksThisTurn = 0;
     S.lastPlayed = null;
+    S.sequence = 0;
 
     let startBlock = 0;
     if (hasEquip('startBlock3')) startBlock += 3;
@@ -169,6 +170,7 @@ const Combat = (function () {
     if (card.bonus) {
       if (card.bonus.type === 'hpLe' && S.player.hp <= card.bonus.value) baseDmg *= card.bonus.mult;
       if (card.bonus.type === 'attacksThisTurn') baseDmg += card.bonus.per * S.attacksThisTurn;
+      if (card.bonus.type === 'seq' && (S.sequence || 0) >= card.bonus.threshold) baseDmg += card.bonus.extra;
     }
     if (card._vm) baseDmg = Math.round(baseDmg * card._vm);
     let hits = card.hits || 1;
@@ -222,6 +224,7 @@ const Combat = (function () {
     S.player.energy -= cost;
     S.hand.splice(i, 1);
     S.cardsPlayedThisBattle = (S.cardsPlayedThisBattle || 0) + 1;
+    S.sequence = (S.sequence || 0) + 1;
     if (hasSkill('randomMult')) { const r = RNG.range(1, 10); S.turnMult += r; log('player', '随机倍率 +' + r); }
     let vm = 1;
     if (hasSkill('fifth') && S.cardsPlayedThisBattle % 5 === 0) { vm *= 4; log('player', '五连击！该牌数值 ×4'); }
@@ -284,6 +287,7 @@ const Combat = (function () {
     S.player.energy -= cost;
     S.hand.splice(i, 1);
     S.cardsPlayedThisBattle = (S.cardsPlayedThisBattle || 0) + 1;
+    S.sequence = (S.sequence || 0) + 1;
     if (hasSkill('randomMult')) { const r = RNG.range(1, 10); S.turnMult += r; log('player', '随机倍率 +' + r); }
     let vm = 1;
     if (hasSkill('fifth') && S.cardsPlayedThisBattle % 5 === 0) { vm *= 4; log('player', '五连击！该牌数值 ×4'); }

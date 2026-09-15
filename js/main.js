@@ -69,6 +69,22 @@ function requireActiveRun(action) {
   action();
   return true;
 }
+let defeatTransitionInProgress = false;
+function handleRunDefeat() {
+  if (defeatTransitionInProgress) return;
+  defeatTransitionInProgress = true;
+  try {
+    addStat('battlesLost', 1);
+    clearRun();
+    pendingClassId = null;
+    setShell(false);
+    UI.resetTurn();
+    showHeroes();
+    UI.pushLog('player', '雪线回卷：已开启新档');
+  } finally {
+    defeatTransitionInProgress = false;
+  }
+}
 function init() {
   loadSettings();
   bind();
@@ -611,12 +627,7 @@ function beginBattle(node) {
 function onBattleEnd(win, S) {
   Run.hp = S.player.hp;
   if (!win) {
-    addStat('battlesLost', 1);
-    document.getElementById('result-big').textContent = '❄️';
-    document.getElementById('result-title').textContent = '差一点…';
-    document.getElementById('result-text').textContent = '再试一次，或返回大厅重新构筑。';
-    document.getElementById('btn-restart').textContent = '返回大厅';
-    UI.showScreen('result');
+    handleRunDefeat();
     return;
   }
 

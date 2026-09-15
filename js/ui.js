@@ -145,6 +145,12 @@ const UI = (function () {
     }
 
     renderBars(S);
+    const seqRow = $('#sequence-row');
+    if (seqRow) {
+      const isCourier = S.classId === 'courier';
+      seqRow.classList.toggle('hidden', !isCourier);
+      if (isCourier) $('#bar-sequence').textContent = S.sequence || 0;
+    }
     syncHand(S);
     renderQueue();
 
