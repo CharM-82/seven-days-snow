@@ -167,6 +167,51 @@ const BOSS_DECKS = {
   ]
 };
 
+const CHAPTERS = [
+  { id: 1, name: '第一章 · 七日预警', nodes: [
+    { type: 'battle', enemyId: 'looter', label: '外围' },
+    { type: 'battle', enemyId: 'hoarder', label: '仓储区' },
+    { type: 'elite', enemyId: 'thug', label: '物业大堂' },
+    { type: 'shop', label: '补给商店' },
+    { type: 'rest', label: '临时休整' },
+    { type: 'boss', enemyId: 'boss', label: '最终对峙' }
+  ]},
+  { id: 2, name: '第二章 · 区域主管', nodes: [
+    { type: 'battle', enemyId: 'looter', label: '外围' },
+    { type: 'battle', enemyId: 'hoarder', label: '仓储区' },
+    { type: 'elite', enemyId: 'thug', label: '物业大堂' },
+    { type: 'shop', label: '补给商店' },
+    { type: 'rest', label: '临时休整' },
+    { type: 'boss', enemyId: 'boss', label: '区域主管' }
+  ]},
+  { id: 3, name: '第三章 · 安保队长', nodes: [
+    { type: 'battle', enemyId: 'looter', label: '外围' },
+    { type: 'battle', enemyId: 'hoarder', label: '仓储区' },
+    { type: 'elite', enemyId: 'thug', label: '物业大堂' },
+    { type: 'shop', label: '补给商店' },
+    { type: 'rest', label: '临时休整' },
+    { type: 'boss', enemyId: 'boss', label: '安保队长' }
+  ]},
+  { id: 4, name: '第四章 · 核心高管', nodes: [
+    { type: 'battle', enemyId: 'looter', label: '外围' },
+    { type: 'battle', enemyId: 'hoarder', label: '仓储区' },
+    { type: 'elite', enemyId: 'thug', label: '物业大堂' },
+    { type: 'shop', label: '补给商店' },
+    { type: 'rest', label: '临时休整' },
+    { type: 'boss', enemyId: 'boss', label: '核心高管' }
+  ]},
+  { id: 5, name: '第五章 · 白夜', nodes: [
+    { type: 'battle', enemyId: 'looter', label: '外围' },
+    { type: 'battle', enemyId: 'hoarder', label: '仓储区' },
+    { type: 'elite', enemyId: 'thug', label: '物业大堂' },
+    { type: 'shop', label: '补给商店' },
+    { type: 'rest', label: '临时休整' },
+    { type: 'boss', enemyId: 'boss', label: '周鸿安' }
+  ]}
+];
+
+function chapterById(id) { return CHAPTERS.find(c => c.id === id); }
+
 const NODES = [
   { label: '外围', enemyId: 'looter' },
   { label: '仓储区', enemyId: 'hoarder' },
@@ -249,4 +294,4 @@ function validateData() {
   if (errors.length) console.warn('[data-validate]', errors);
   return errors;
 }
-if (typeof module !== 'undefined' && module.exports) module.exports = { GAME, CARDS, EQUIPMENTS, ENEMIES, BOSSES, NODES, CLASSES, SKILL_CARDS, ALL_SKILL_CARDS, SHOP, BOSS_BUFFS, BOSS_DECKS, cardById, equipById, enemyById, bossByChapter, cardPool, classById, skillById, handPool, skillPool, bossBuffs, bossDeck, validateData };
+if (typeof module !== 'undefined' && module.exports) module.exports = { GAME, CARDS, EQUIPMENTS, ENEMIES, BOSSES, NODES, CLASSES, SKILL_CARDS, ALL_SKILL_CARDS, SHOP, BOSS_BUFFS, BOSS_DECKS, cardById, equipById, enemyById, bossByChapter, cardPool, classById, skillById, handPool, skillPool, bossBuffs, bossDeck, validateData, CHAPTERS, chapterById };

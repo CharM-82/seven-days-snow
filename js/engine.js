@@ -435,17 +435,26 @@ const Combat = (function () {
     takeCardFromHand,
     resolveAttack,
     settleDamage,
-    start(nodeIndex, deckIds, equip, hp, classId, cbChange, cbLog, cbEnd) {
-      const node = NODES[nodeIndex];
-      const isBoss = node.enemyId === 'boss';
-      const template = isBoss ? bossByChapter(GAME.bossChapter) : enemyById(node.enemyId);
+    start(nodeOrIndex, deckIds, equip, hp, classId, cbChange, cbLog, cbEnd) {
+      let node, chapter;
+      if (typeof nodeOrIndex === 'number') {
+        node = NODES[nodeOrIndex];
+        chapter = GAME.bossChapter;
+      } else {
+        node = nodeOrIndex;
+        chapter = nodeOrIndex.chapter || GAME.bossChapter;
+      }
+      const isBoss = node && node.enemyId === 'boss';
+      const template = isBoss ? bossByChapter(chapter) : enemyById(node.enemyId);
+      const hpMult = 1 + (chapter - 1) * 0.35;
       S = {
-        nodeIndex,
+        nodeIndex: typeof nodeOrIndex === 'number' ? nodeOrIndex : 0,
         node,
+        chapter,
         boss: isBoss ? template : null,
         enemy: {
           id: template.id, name: template.name, icon: template.icon,
-          hp: template.hp, maxHp: template.hp,
+          hp: Math.round(template.hp * hpMult), maxHp: Math.round(template.hp * hpMult),
           block: isBoss ? (template.startBlock || 0) : 0,
           vuln: 0, boss: isBoss, stacks: 0,
           intents: (isBoss ? template.attack : template.intents).slice(),

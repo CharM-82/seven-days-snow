@@ -1,5 +1,7 @@
-// 《七日回雪》v7 漫画风外围 UI · 主流程
+// 《七日回雪》v10 五章路线 · 主流程
 'use strict';
+
+const SAVE_KEY = 'qirihui-run';
 
 let Run = {
   classId: null,
@@ -7,7 +9,10 @@ let Run = {
   equip: [null, null, null],
   hp: GAME.playerHp,
   gold: SHOP.startGold,
-  node: 0,
+  chapter: 1,
+  nodeIndex: 0,
+  route: null,
+  seed: null,
   shop: null
 };
 
@@ -15,10 +20,15 @@ function shuffle(arr) { return RNG.shuffle(arr); }
 function sample(arr, n) { return RNG.shuffle(arr).slice(0, n); }
 
 function init() {
-  Run.seed = RNG.seed(Date.now());
   bind();
   UI.initInteraction();
-  restockShop();
+  const saved = loadRun();
+  if (saved) {
+    Run = Object.assign({}, Run, saved);
+    if (!Run.route && Run.chapter) Run.route = chapterById(Run.chapter).nodes;
+  }
+  if (!Run.shop) restockShop();
+  if (!Run.seed) Run.seed = RNG.seed(Date.now());
   renderHome();
   navTo('home');
   if (typeof validateData === 'function') validateData();
@@ -42,6 +52,10 @@ function navTo(screen) {
 }
 
 function goHome() { renderHome(); navTo('home'); }
+function goMapOrHome() {
+  if (Run.classId && Run.route) { renderPlay(); navTo('play'); }
+  else goHome();
+}
 function showPlay() { if (!Run.classId) { showHeroes(); return; } renderPlay(); navTo('play'); }
 function showHeroes() { renderHeroes(); navTo('heroes'); }
 function showShop() { if (!Run.classId) { showHeroes(); return; } renderShop(); navTo('shop'); }
@@ -75,13 +89,53 @@ function bind() {
   });
   document.getElementById('btn-home-play').addEventListener('click', showPlay);
   document.getElementById('btn-coming-back').addEventListener('click', goHome);
-
-  document.getElementById('btn-restart').addEventListener('click', goHome);
+  document.getElementById('btn-restart').addEventListener('click', goMapOrHome);
+  document.getElementById('btn-shop-done').addEventListener('click', () => {
+    advanceNode();
+    goMapOrHome();
+  });
   document.getElementById('btn-end-turn').addEventListener('click', () => {
     if (UI.isBusy()) return;
     UI.shakeTurnEnd();
     Combat.endTurn();
   });
+}
+
+// —— 存档 ——
+function saveRun() {
+  const data = {
+    classId: Run.classId, deck: Run.deck, equip: Run.equip, hp: Run.hp,
+    gold: Run.gold, chapter: Run.chapter, nodeIndex: Run.nodeIndex,
+    route: Run.route, seed: Run.seed, shop: Run.shop
+  };
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch (e) {}
+}
+function loadRun() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (data && data.classId) return data;
+  } catch (e) {}
+  return null;
+}
+function clearRun() {
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+}
+
+// —— 新局 ——
+function newRun(classId) {
+  Run.classId = classId;
+  Run.deck = classById(classId).starterDeck.slice();
+  Run.equip = [null, null, null];
+  Run.hp = GAME.playerHp;
+  Run.gold = SHOP.startGold;
+  Run.chapter = 1;
+  Run.nodeIndex = 0;
+  Run.route = chapterById(1).nodes;
+  Run.seed = RNG.seed(Date.now());
+  restockShop();
+  saveRun();
 }
 
 function restockShop() {
@@ -92,15 +146,6 @@ function restockShop() {
   };
 }
 
-function newRun(classId) {
-  Run.classId = classId;
-  Run.deck = classById(classId).starterDeck.slice();
-  Run.equip = [null, null, null];
-  Run.hp = GAME.playerHp;
-  Run.gold = SHOP.startGold;
-  restockShop();
-}
-
 // —— 大厅 ——
 function renderHome() {
   const cl = Run.classId ? classById(Run.classId) : null;
@@ -109,28 +154,88 @@ function renderHome() {
   document.getElementById('home-hero-sub').textContent = cl
     ? (cl.desc + (cl.passive ? ' · ' + cl.passive.name : ''))
     : '选择一位英雄，开始七日预警';
-  document.getElementById('btn-home-primary').textContent = cl ? '开始游戏' : '选择英雄';
+  document.getElementById('btn-home-primary').textContent = cl ? '继续闯关' : '选择英雄';
   updateShellGold();
 }
 
-// —— 游戏 / 选关 ——
+// —— 五章路线地图 ——
 function renderPlay() {
   const list = document.getElementById('play-list');
-  list.innerHTML = NODES.map((n, i) => {
-    const isBoss = n.enemyId === 'boss';
-    const icon = isBoss ? bossByChapter(1).icon : enemyById(n.enemyId).icon;
-    const name = isBoss ? bossByChapter(1).name : enemyById(n.enemyId).name;
-    const gold = isBoss ? SHOP.bossGold : SHOP.winGold;
-    return '<div class="mode-card comic-panel' + (isBoss ? ' boss' : '') + '" data-idx="' + i + '">'
+  const chapter = chapterById(Run.chapter);
+  const route = Run.route || chapter.nodes;
+  const pageHead = document.querySelector('#screen-play .page-head');
+  if (pageHead) pageHead.innerHTML = '<h2>' + chapter.name + '</h2><p>种子 ' + Run.seed + ' · 第 ' + (Run.nodeIndex + 1) + '/' + route.length + ' 节点</p>';
+
+  list.innerHTML = route.map((n, i) => {
+    const done = i < Run.nodeIndex;
+    const current = i === Run.nodeIndex;
+    const locked = i > Run.nodeIndex;
+    let icon, name, meta, reward;
+    if (n.type === 'battle' || n.type === 'elite') {
+      icon = enemyById(n.enemyId).icon;
+      name = n.label;
+      meta = n.type === 'elite' ? '精英 · ' + enemyById(n.enemyId).name : enemyById(n.enemyId).name;
+      reward = '胜利 +' + (n.type === 'elite' ? 70 : SHOP.winGold) + ' 金币';
+    } else if (n.type === 'shop') {
+      icon = '🛒'; name = n.label; meta = '购买卡牌与技能'; reward = '补给';
+    } else if (n.type === 'rest') {
+      icon = '🏕️'; name = n.label; meta = '恢复生命'; reward = '+15 生命';
+    } else {
+      icon = bossByChapter(Run.chapter).icon; name = n.label; meta = 'Boss · ' + bossByChapter(Run.chapter).name; reward = '胜利 +' + SHOP.bossGold + ' 金币';
+    }
+    return '<div class="mode-card comic-panel' + (n.type === 'boss' ? ' boss' : '') + (done ? ' done' : '') + (current ? ' current' : '') + (locked ? ' locked' : '') + '" data-idx="' + i + '">'
       + '<div class="mode-icon">' + icon + '</div>'
-      + '<div class="mode-info"><div class="mode-name">' + n.label + '</div>'
-      + '<div class="mode-meta">' + (isBoss ? 'Boss · ' : '') + name + '</div>'
-      + '<div class="mode-reward">胜利 +' + gold + ' 金币</div></div>'
-      + '<div class="mode-go">▶</div></div>';
+      + '<div class="mode-info"><div class="mode-name">' + (done ? '✓ ' : '') + name + '</div>'
+      + '<div class="mode-meta">' + meta + '</div>'
+      + '<div class="mode-reward">' + reward + '</div></div>'
+      + '<div class="mode-go">' + (locked ? '🔒' : '▶') + '</div></div>';
   }).join('');
-  list.querySelectorAll('.mode-card').forEach(el => el.addEventListener('click', () => {
-    beginBattle(parseInt(el.dataset.idx, 10));
-  }));
+
+  list.querySelectorAll('.mode-card').forEach(el => {
+    el.addEventListener('click', () => {
+      const i = parseInt(el.dataset.idx, 10);
+      if (i !== Run.nodeIndex) return;
+      enterNode(i);
+    });
+  });
+}
+
+function enterNode(i) {
+  const node = Run.route[i];
+  if (!node) return;
+  if (node.type === 'battle' || node.type === 'elite' || node.type === 'boss') {
+    beginBattle(node);
+  } else if (node.type === 'shop') {
+    renderShop();
+    const done = document.getElementById('btn-shop-done');
+    done.classList.remove('hidden');
+    navTo('shop');
+  } else if (node.type === 'rest') {
+    Run.hp = Math.min(GAME.playerHp, Run.hp + 15);
+    UI.pushLog('player', '休整：生命 +15');
+    advanceNode();
+    renderPlay();
+  }
+}
+
+function advanceNode() {
+  Run.nodeIndex += 1;
+  if (Run.nodeIndex >= Run.route.length) {
+    nextChapter();
+  }
+  saveRun();
+}
+
+function nextChapter() {
+  if (Run.chapter >= 5) {
+    // 通关在 onBattleEnd 中处理
+    Run.chapter = 5;
+    Run.nodeIndex = Run.route.length - 1;
+    return;
+  }
+  Run.chapter += 1;
+  Run.nodeIndex = 0;
+  Run.route = chapterById(Run.chapter).nodes;
 }
 
 // —— 英雄 ——
@@ -180,6 +285,7 @@ function showComingSoon(name) {
   navTo('coming');
 }
 
+// —— 商城 ——
 function renderShop() {
   document.getElementById('shop-gold').textContent = Run.gold;
   updateShellGold();
@@ -209,6 +315,12 @@ function renderShop() {
   document.querySelectorAll('#shop-slots .shop-card[data-idx]').forEach(el => el.addEventListener('click', () => {
     buyShopSlot(parseInt(el.dataset.idx, 10));
   }));
+
+  const doneBtn = document.getElementById('btn-shop-done');
+  if (doneBtn) {
+    const inShopNode = Run.route && Run.route[Run.nodeIndex] && Run.route[Run.nodeIndex].type === 'shop';
+    doneBtn.classList.toggle('hidden', !inShopNode);
+  }
 }
 
 function buyPack(kind) {
@@ -226,6 +338,7 @@ function buyPack(kind) {
       if (isSkill) addSkill(cards[i].id);
       else Run.deck.push(cards[i].id);
     }
+    saveRun();
     renderShop();
   }, () => { Run.gold += cost; Run.shop.packs[kind] = true; renderShop(); });
 }
@@ -237,6 +350,7 @@ function buyShopSlot(i) {
   Run.gold -= SHOP.shopCardCost;
   Run.shop.slots[i] = null;
   addSkill(skill.id);
+  saveRun();
   renderShop();
 }
 
@@ -253,12 +367,12 @@ function addSkill(id) {
   if (slot >= 0) Run.equip[slot] = id;
 }
 
-function beginBattle(nodeIndex) {
-  Run.node = nodeIndex;
+// —— 战斗 ——
+function beginBattle(node) {
   setShell(false);
   UI.showScreen('run');
   UI.resetTurn();
-  Combat.start(nodeIndex, Run.deck, Run.equip, Run.hp, Run.classId,
+  Combat.start(Object.assign({}, node, { chapter: Run.chapter }), Run.deck, Run.equip, Run.hp, Run.classId,
     S => UI.renderCombat(S),
     (kind, text) => UI.pushLog(kind, text),
     onBattleEnd
@@ -267,32 +381,36 @@ function beginBattle(nodeIndex) {
 
 function onBattleEnd(win, S) {
   Run.hp = S.player.hp;
-  if (win) {
-    const gold = Run.node === 3 ? SHOP.bossGold : SHOP.winGold;
-    Run.gold += gold;
-    restockShop();
-    if (Run.node === 3) {
-      UI.showBossDeath(() => {
-        document.getElementById('result-big').textContent = '🏆';
-        document.getElementById('result-title').textContent = '通关！';
-        document.getElementById('result-text').textContent = '你击败了物业经理，获得 ' + gold + ' 金币。';
-        document.getElementById('btn-restart').textContent = '返回大厅';
-        UI.showScreen('result');
-      });
-    } else {
-      document.getElementById('result-big').textContent = '✅';
-      document.getElementById('result-title').textContent = '战斗胜利';
-      document.getElementById('result-text').textContent = '获得 ' + gold + ' 金币，商店已重新补货。';
-      document.getElementById('btn-restart').textContent = '返回大厅';
-      UI.showScreen('result');
-    }
-  } else {
+  if (!win) {
     document.getElementById('result-big').textContent = '❄️';
     document.getElementById('result-title').textContent = '差一点…';
-    document.getElementById('result-text').textContent = '再试一次。';
+    document.getElementById('result-text').textContent = '再试一次，或返回大厅重新构筑。';
     document.getElementById('btn-restart').textContent = '返回大厅';
     UI.showScreen('result');
+    return;
   }
+
+  const node = Run.route[Run.nodeIndex];
+  const gold = node.type === 'boss' ? SHOP.bossGold : node.type === 'elite' ? 70 : SHOP.winGold;
+  Run.gold += gold;
+  restockShop();
+
+  if (node.type === 'boss' && Run.chapter >= 5) {
+    document.getElementById('result-big').textContent = '🏆';
+    document.getElementById('result-title').textContent = '通关！';
+    document.getElementById('result-text').textContent = '你走完了五章，获得 ' + gold + ' 金币。';
+    document.getElementById('btn-restart').textContent = '返回大厅';
+    UI.showScreen('result');
+    clearRun();
+    return;
+  }
+
+  advanceNode();
+  document.getElementById('result-big').textContent = node.type === 'boss' ? '🏁' : '✅';
+  document.getElementById('result-title').textContent = node.type === 'boss' ? '章节完成' : '战斗胜利';
+  document.getElementById('result-text').textContent = '获得 ' + gold + ' 金币，商店已重新补货。';
+  document.getElementById('btn-restart').textContent = '继续';
+  UI.showScreen('result');
 }
 
 document.addEventListener('DOMContentLoaded', init);
